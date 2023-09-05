@@ -53,13 +53,86 @@ async function studentData(req, res) {
             },
         ],
         agreements: [
-
+            {
+                job_title: "Desarrollador de software",
+                enterprise_name: "IBM del Perú",
+                id: '1234'
+            },
+            // {
+            //     job_title: "Desarrollador de software",
+            //     enterprise_name: "IBM del Perú",
+            //     location: "Lima",
+            //     state: "Vencido",
+            //     sector: "Consultoría",
+            //     amount: 1025
+            // },
+            // {
+            //     job_title: "Desarrollador de software",
+            //     enterprise_name: "IBM del Perú",
+            //     location: "Lima",
+            //     state: "Falta firmar",
+            //     sector: "Consultoría",
+            //     amount: 1025
+            // },
+            // {
+            //     job_title: "Desarrollador de software",
+            //     enterprise_name: "IBM del Perú",
+            //     location: "Lima",
+            //     state: "En espera de firmas",
+            //     sector: "Consultoría",
+            //     amount: 1025
+            // },
+            // {
+            //     job_title: "Desarrollador de software",
+            //     enterprise_name: "IBM del Perú",
+            //     location: "Lima",
+            //     state: "Empresa falta subir convenio",
+            //     sector: "Consultoría",
+            //     amount: 1025
+            // },
         ],
         ads: [
-
+            {
+                job_title: "Desarrollador de software",
+                enterprise_name: "IBM del Perú", 
+                date_end: "08-08-2023",
+                code: 'C0987'
+            },
+            {
+                job_title: "Desarrollador de software",
+                enterprise_name: "IBM del Perú", 
+                date_end: "08-08-2023",
+                code: 'C0987'
+            },
+            {
+                job_title: "Desarrollador de software",
+                enterprise_name: "IBM del Perú", 
+                date_end: "08-08-2023",
+                code: 'C0987'
+            },
         ],
         opinions: [
-
+            {
+                enterprise_name: "IBM del Perú",
+                score: 4,
+                date_update: "08-08-2023",
+                description: "Experiencia excelente!",
+                student: "Oscar Navarro"
+            },
+            {
+                enterprise_name: "IBM del Perú",
+                score: 4,
+                date_update: "08-08-2023",
+                description: "Experiencia excelente!",
+                student: "Oscar Navarro"
+            },
+            {
+                enterprise_name: "IBM del Perú",
+                score: 4,
+                date_update: "08-08-2023",
+                description: "Experiencia excelente!",
+                student: "Oscar Navarro"
+            },
         ]
     }
 

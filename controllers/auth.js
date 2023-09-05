@@ -5,25 +5,27 @@ const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
 
 async function singIn(req, res) { 
-    const {email} = req.params;
+    const {attr, value} = req.params;
 
     const user = {
         id: '100',
-        role: "STUDENT",
-        name: 'Oscar Daniel',
+        role: "EMPLOYED",
+        name: 'Oscar Navarro',
         lastname: 'Navarro Cieza',
-        email: email,
+        email: 'oscar.navarro@pucp.edu.pe',
         photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
         location: 'Lima',
         uploadDateCV: '2002-08-30',
         languages: [
             {
                 value: '1',
-                name: 'Español'
+                name: 'Español',
+                level: 'Avanzado'
             },
             {
                 value: '2',
-                name: 'Inglés'
+                name: 'Inglés',
+                level: 'Básico'
             },
         ],
         description: "Estudiante de 9no ciclo de la carrera de ingeniería informática. Tercio superior. Inglés intermedio según Idiomas Católica. Con especial interés en el desarrollo de software y la experiencia de usuario (UX). Trabajé en la empresa IBM ayudando a sus clientes con el desarrollo y mantenimiento de sus aplicaciones. Full stack developer en web y mobile, especializado en Frontend. Autodidacta. Disfruto de enseñar lo que aprendo y de trabajar en equipo.",
@@ -36,7 +38,13 @@ async function singIn(req, res) {
         sector: 'Consultoría',
         numEmployees: '100 - 1000',
         job: 'Lead Manager',
-        expire: new Date()
+        expire: new Date(),
+        score: 4.7,
+        enterprise_name: "IBM del Perú",
+        reader: true,
+        signatory: false,
+        recruiter: true,
+        enterprise_id: '100'
     }
 
     res.status(200).send(user);

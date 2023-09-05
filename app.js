@@ -7,6 +7,13 @@ const { API_VERSION } = require('./config');
 
 // Load routings
 const authRoutes =  require('./routers/auth');
+const studentRoutes =  require('./routers/student');
+const enterpriseRoutes =  require('./routers/enterprise');
+const employedRoutes =  require('./routers/employed');
+const specialtyRoutes =  require('./routers/specialty');
+const sysDataRoutes =  require('./routers/sysData');
+const jobRoutes =  require('./routers/job');
+const agreementRoutes =  require('./routers/agreement');
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
@@ -22,5 +29,12 @@ app.use((req, res, next) => {
 });
 
 app.use(`/api/${API_VERSION}`, authRoutes);
+app.use(`/api/${API_VERSION}`, studentRoutes);
+app.use(`/api/${API_VERSION}`, enterpriseRoutes);
+app.use(`/api/${API_VERSION}`, employedRoutes);
+app.use(`/api/${API_VERSION}`, specialtyRoutes);
+app.use(`/api/${API_VERSION}`, sysDataRoutes);
+app.use(`/api/${API_VERSION}`, jobRoutes);
+app.use(`/api/${API_VERSION}`, agreementRoutes);
 
 module.exports = app;
