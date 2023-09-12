@@ -9,7 +9,7 @@ async function singIn(req, res) {
 
     const user = {
         id: '100',
-        role: "EMPLOYED",
+        role: "STUDENT",
         name: 'Oscar Navarro',
         lastname: 'Navarro Cieza',
         email: 'oscar.navarro@pucp.edu.pe',
@@ -61,7 +61,11 @@ async function signUp(req, res) {
     //     if (err) throw err;
     // });
 
-    // const {email, photo} = req.body;
+    const {role,name,lastname,email,photo,location,language,
+        date,code,specialty,cycle,ruc,phone,sector,
+        numEmployees,job} = req.body;
+
+
     const user = {
         id: '100',
         role: "EMPLOYED",
@@ -110,6 +114,11 @@ async function signUp(req, res) {
     // connection.end();
 }
 async function updateProfile(req, res) {
+
+    const {role,name,lastname,photo,location,
+        date,code,specialty,cycle,ruc,phone,sector,
+        numEmployees,job} = req.body;
+        
     const result = true
 
     res.status(200).send(result);

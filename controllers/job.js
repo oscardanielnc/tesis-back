@@ -6,6 +6,9 @@ const { sqlAsync } = require('../utils/async');
 
 async function getJobs(req, res) { 
 
+    const {job,enterprise,location,languages,modality,sector,
+        salary_min,salary_max,date_init,date_end} = req.body;
+
     const data = [
         {
             job_title: "Desarrollador de software",
@@ -52,6 +55,7 @@ async function getJobs(req, res) {
 }
 
 async function getJobByCode(req, res) { 
+    const {code} = req.params;
 
     const data = {
         enterprise_name: "IBM del Perú", 
@@ -98,14 +102,7 @@ async function getJobByCode(req, res) {
 }
 
 async function applyJob(req, res) { 
-
-    const data = true
-    res.status(200).send(data);
-
-    // connection.end();
-
-}
-async function applyJob(req, res) { 
+    const {idUser, code} = req.body;
 
     const data = true
     res.status(200).send(data);
@@ -115,6 +112,7 @@ async function applyJob(req, res) {
 }
 
 async function createJob(req, res) { 
+    const {job,salary,date_end,modality,vacancies,max,job_start,job_end,sections} = req.body;
 
     const data = {success: true, code: 'C567'}
     res.status(200).send(data);
@@ -123,7 +121,8 @@ async function createJob(req, res) {
 
 }
 async function updateJob(req, res) { 
-
+    const {job_title,code,date_end,job_start,job_end,salary,
+        modality,vacancies,max_applicants,sections} = req.body;
     const data = true
     res.status(200).send(data);
 

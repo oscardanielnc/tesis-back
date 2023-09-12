@@ -5,21 +5,32 @@ const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
 
 async function getAgreements(req, res) { 
+    const {job,enterprise,student,employed,location,modality,
+        salary_min,salary_max,state,date_end,date_init} = req.body;
+
+    
+
+    //agreement 
+    // const sql1 = `SELECT * FROM agreement WHERE active=1`
+    // const response1 = {}
+    //user
+    // const sql2 = `SELECT * FROM user WHERE id_user=${response1.id_student\response1.id_enterprise}`
+    
 
     const data = [
         {
-            job_title: "Desarrollador de software",
-            user_name: "IBM del Perú", 
-            code: 'C0987',
-            salary: 1025,
-            job_start: '08-08-2019',
-            job_end: '08-08-2020',
-            location: 'Lima',
+            job_title: "Desarrollador de software",//name
+            user_name: "IBM del Perú", //response2.name, response2.lastname?
+            code: 'C0987', //id_agreement
+            salary: 1025, //response3(job).salary
+            job_start: '08-08-2019', //init_date
+            job_end: '08-08-2020', //end_date
+            location: 'Lima',//response4(loccation).name
             state: 'Vigente',
             state_id: 1,
-            user_id: '200',
-            doc_path: 'oiuyffghj',
-            user_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
+            user_id: '200',//response2.id_user
+            doc_path: 'oiuyffghj', //document_path
+            user_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c' //response2.photo
         },
         {
             job_title: "Desarrollador de software",
@@ -87,12 +98,14 @@ async function getAgreements(req, res) {
 }
 
 async function getAgreementState(req, res) { 
+    const {code} = req.params;
+    // const sql1 = `SELECT * FROM agreement WHERE active=1`
 
     const data = {
-        job_title: "Desarrollador de software",
-        enterprise_name: "IBM del Perú", 
-        student_name: "Oscar Navarro",
-        enterprise_score: 3,
+        job_title: "Desarrollador de software", //name
+        enterprise_name: "IBM del Perú", //r2(enterprise).name
+        student_name: "Oscar Navarro",//r3(student).name,lastname
+        enterprise_score: 3, 
         enterprise_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
         student_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
         enterprise_sector: 'Consultoría',

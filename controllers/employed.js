@@ -71,7 +71,7 @@ async function employedData(req, res) {
 
 
 async function getEmployees(req, res) { 
-    const {idUser} = req.params;
+    const {name,job,reader,signatory,recruiter} = req.body;
 
     const data = [
         {
@@ -112,7 +112,8 @@ async function getEmployees(req, res) {
 
 }
 async function changePrivToEmployed(req, res) { 
-
+    const {name,job,reader,signatory,recruiter} = req.body;
+    
     const data = true
 
     res.status(200).send(data);

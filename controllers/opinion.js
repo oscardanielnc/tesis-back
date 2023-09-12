@@ -5,7 +5,7 @@ const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
 
 async function setMyOpinion(req, res) { 
-
+    const {enterprise_name,score,date_update,description,student,student_id,ruc} = req.body
     const data = true;
 
     res.status(200).send(data);
@@ -14,6 +14,7 @@ async function setMyOpinion(req, res) {
 
 }
 async function updateMyOpinion(req, res) { 
+    const {id,enterprise_name,score,date_update,description,student,student_id,ruc} = req.body
 
     const data = true;
 

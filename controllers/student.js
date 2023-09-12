@@ -122,6 +122,7 @@ async function studentData(req, res) {
 }
 
 async function getStudents(req, res) { 
+    const {student,location,languages,specialty,oderby,type} = req.body
 
     const data = [
         {
@@ -199,7 +200,8 @@ async function getStudents(req, res) {
 }
 
 async function contractStudent(req, res) { 
-
+    const {student, enterprise} = req.body;
+    
     const data = true
 
     res.status(200).send(data);

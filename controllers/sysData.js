@@ -78,7 +78,7 @@ async function updateMyLenguage(req, res) {
 }
 async function deleteMyLenguage(req, res) { 
     // Actualizar la relacion de un lenguaje existente con un perfil
-    const {idUser, idLanguage, level} = req.body
+    const {userId, lanId} = req.body
     const data = true
 
     res.status(200).send(data);
@@ -87,6 +87,7 @@ async function deleteMyLenguage(req, res) {
 
 }
 async function setMyCertificate(req, res) { 
+    const {title,enterprise_name,icon,date_init,date_end,description,enterprise_id,enterprise_photo,ruc,type} = req.body;
     // Actualizar la relacion de un lenguaje existente con un perfil
     const {idUser, idLanguage, level} = req.body
     const data = {success: true, id: '1232222'}
@@ -97,6 +98,7 @@ async function setMyCertificate(req, res) {
 
 }
 async function updateMyCertificate(req, res) { 
+    const {id,title,enterprise_name,icon,date_init,date_end,description,enterprise_id,enterprise_photo,ruc} = req.body;
     // Actualizar la relacion de un lenguaje existente con un perfil
     const {idUser, idLanguage, level} = req.body
     const data = true
@@ -108,7 +110,7 @@ async function updateMyCertificate(req, res) {
 }
 async function deleteMyCertificate(req, res) { 
     // Actualizar la relacion de un lenguaje existente con un perfil
-    const {idUser, idLanguage, level} = req.body
+    const {id} = req.body
     const data = true
 
     res.status(200).send(data);
