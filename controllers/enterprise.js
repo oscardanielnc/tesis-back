@@ -33,28 +33,34 @@ async function enterpriseData(req, res) {
         ],
         opinions: [
             {
+                id: '123',
                 enterprise_name: "IBM del Perú",
                 score: 4,
                 date_update: "08-08-2023",
                 description: "Experiencia excelente!",
                 student: "Oscar Navarro",
-                student_id: '100'
+                student_id: '100',
+                ruc: '20000000022'
             },
             {
+                id: '123',
                 enterprise_name: "IBM del Perú",
                 score: 4,
                 date_update: "08-08-2023",
                 description: "Experiencia excelente!",
                 student: "Oscar Navarro",
-                student_id: '100'
+                student_id: '100',
+                ruc: '20000000022'
             },
             {
+                id: '123',
                 enterprise_name: "IBM del Perú",
                 score: 4,
                 date_update: "08-08-2023",
                 description: "Experiencia excelente!",
                 student: "Oscar Navarro",
-                student_id: '100'
+                student_id: '100',
+                ruc: '20000000022'
             },
         ]
     }
@@ -65,7 +71,24 @@ async function enterpriseData(req, res) {
 
 }
 
+async function enterpriseExist(req, res) { 
+    const {ruc} = req.params;
+
+    const data = {
+        exist: true,
+        ruc: ruc,
+        name: "IBM de Peru",
+        photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
+    };
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+
 
 module.exports = {
-    enterpriseData
+    enterpriseData,
+    enterpriseExist
 }

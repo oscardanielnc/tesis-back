@@ -51,7 +51,95 @@ async function getJobs(req, res) {
 
 }
 
+async function getJobByCode(req, res) { 
+
+    const data = {
+        enterprise_name: "IBM del Perú", 
+        enterprise_score: 3,
+        enterprise_id: '100',
+        enterprise_sector: 'Consultoría',
+        enterprise_location: 'Lima',
+        enterprise_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
+        job_title: "Desarrollador de software",
+        code: 'C0987',
+        date_end: "2023-08-08",
+        job_start: "2023-08-09",
+        job_end: "2023-08-10",
+        salary: 1025,
+        modality: 'Virtual',
+        vacancies: 0,
+        max_applicants: 0,
+        registered: 36,
+        alredy_applied: false,
+        sections: [
+            {
+                title: "Acerca del empleo",
+                description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+            },
+            {
+                title: "Principales actividades",
+                description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+            },
+            {
+                title: "Compenetencias requeridas",
+                description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+            },
+            {
+                title: "Beneficios adicionales",
+                description: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum."
+            },
+        ]
+    }
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+
+async function applyJob(req, res) { 
+
+    const data = true
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+async function applyJob(req, res) { 
+
+    const data = true
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+
+async function createJob(req, res) { 
+
+    const data = {success: true, code: 'C567'}
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+async function updateJob(req, res) { 
+
+    const data = true
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+
 
 module.exports = {
-    getJobs
+    getJobs,
+    getJobByCode,
+    applyJob,
+    createJob,
+    updateJob
 }
+
+
+
+

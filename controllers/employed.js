@@ -78,7 +78,7 @@ async function getEmployees(req, res) {
             name: "Juan León Osorio",
             job: "Comunity Manager", 
             date_update: '08-08-2023',
-            user_id: '200',
+            user_id: '2030',
             reader: true,
             signatory: true,
             recruiter: true,
@@ -98,7 +98,7 @@ async function getEmployees(req, res) {
             name: "Juan León Osorio",
             job: "Comunity Manager", 
             date_update: '08-08-2023',
-            user_id: '200',
+            user_id: '20220',
             reader: false,
             signatory: false,
             recruiter: false,
@@ -111,9 +111,19 @@ async function getEmployees(req, res) {
     // connection.end();
 
 }
+async function changePrivToEmployed(req, res) { 
+
+    const data = true
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
 
 
 module.exports = {
     employedData,
-    getEmployees
+    getEmployees,
+    changePrivToEmployed
 }

@@ -14,6 +14,7 @@ const specialtyRoutes =  require('./routers/specialty');
 const sysDataRoutes =  require('./routers/sysData');
 const jobRoutes =  require('./routers/job');
 const agreementRoutes =  require('./routers/agreement');
+const opinionRoutes =  require('./routers/opinion');
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
@@ -36,5 +37,6 @@ app.use(`/api/${API_VERSION}`, specialtyRoutes);
 app.use(`/api/${API_VERSION}`, sysDataRoutes);
 app.use(`/api/${API_VERSION}`, jobRoutes);
 app.use(`/api/${API_VERSION}`, agreementRoutes);
+app.use(`/api/${API_VERSION}`, opinionRoutes);
 
 module.exports = app;

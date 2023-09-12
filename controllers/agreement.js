@@ -18,6 +18,7 @@ async function getAgreements(req, res) {
             state: 'Vigente',
             state_id: 1,
             user_id: '200',
+            doc_path: 'oiuyffghj',
             user_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
         },
         {
@@ -31,6 +32,7 @@ async function getAgreements(req, res) {
             state: 'Vencido',
             state_id: -1,
             user_id: '200',
+            doc_path: 'oiuyffghj',
             user_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
         },
         {
@@ -44,6 +46,7 @@ async function getAgreements(req, res) {
             state: 'Falta firmar',
             state_id: 0,
             user_id: '200',
+            doc_path: 'oiuyffghj',
             user_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
         },
         {
@@ -57,6 +60,7 @@ async function getAgreements(req, res) {
             state: 'En espera de firmas',
             state_id: 0,
             user_id: '200',
+            doc_path: 'oiuyffghj',
             user_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
         },
         {
@@ -70,6 +74,7 @@ async function getAgreements(req, res) {
             state: 'Sin convenio',
             state_id: 0,
             user_id: '200',
+            doc_path: 'oiuyffghj',
             user_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
         },
 
@@ -81,7 +86,59 @@ async function getAgreements(req, res) {
 
 }
 
+async function getAgreementState(req, res) { 
+
+    const data = {
+        job_title: "Desarrollador de software",
+        enterprise_name: "IBM del Perú", 
+        student_name: "Oscar Navarro",
+        enterprise_score: 3,
+        enterprise_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
+        student_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
+        enterprise_sector: 'Consultoría',
+        enterprise_location: 'Lima',
+        code: 'C0987',
+        salary: 1025,
+        enterprise_id: '200',
+        student_id: '100',
+        modality: 'Presencial',
+        description: 'text text text text',
+        list: [
+            {
+                id: '200',
+                photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
+                name: 'Oscar Daniel',
+                role: 'STUDENT',
+                date: '08-08-2023',
+                attr: "Estudiante",
+            },
+            {
+                id: '200',
+                photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
+                name: 'Oscar Daniel',
+                role: 'PROFESSOR',
+                date: '08-08-2023',
+                attr: "Universidad"
+            },
+            {
+                id: '200',
+                photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
+                name: 'Oscar Daniel',
+                role: 'EMPLOYED',
+                date: '08-08-2023',
+                attr: "Empresa"
+            },
+        ]
+    }
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+
 
 module.exports = {
-    getAgreements
+    getAgreements,
+    getAgreementState
 }
