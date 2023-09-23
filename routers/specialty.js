@@ -3,6 +3,8 @@ const SpecialtyController = require("../controllers/specialty");
 
 const api = express.Router();
 
-api.get("/specialty", SpecialtyController.getSpecialties);
+api.post("/specialties", SpecialtyController.getSpecialties);
+api.post("/specialty", SpecialtyController.createSpecialty);
+api.put("/specialty", SpecialtyController.updateSpecialty);
 
 module.exports = api;

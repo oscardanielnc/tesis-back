@@ -4,7 +4,8 @@ const moment = require("moment");
 const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
 
-async function getLocations(req, res) { 
+async function getLocations(req, res) {
+    const {name} = req.body;
 
     const data = [
         {
@@ -23,6 +24,7 @@ async function getLocations(req, res) {
 
 }
 async function getLanguage(req, res) { 
+    const {name} = req.body;
 
     const data = [
         {
@@ -44,12 +46,44 @@ async function getLanguage(req, res) {
     // connection.end();
 
 }
+async function getSectors(req, res) { 
+    const {name} = req.body;
+
+    const data = [
+        {
+            value: '1',
+            name: 'Consultoría'
+        },
+        {
+            value: '2',
+            name: 'Tecnologías de Información'
+        },
+        {
+            value: '3',
+            name: 'Telecomunicaciones'
+        },
+    ]
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
 async function getEmailsSystem(req, res) { 
 
     const data = {
         support: "soporte@pucp.edu.pe",
         domain: "pucp.edu.pe",
     }
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+async function updateEmailsSystem(req, res) { 
+    const {support,domain} = req.body;
+    const data = true
 
     res.status(200).send(data);
 
@@ -118,16 +152,65 @@ async function deleteMyCertificate(req, res) {
     // connection.end();
 
 }
+async function maintenanceSysData(req, res) { 
+    const {} = req.body;
+    // Actualizar la relacion de un lenguaje existente con un perfil
+    const {value,name,type,execute} = req.body
+    const data = true
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+
+async function createPeriod(req, res) { 
+    const {id, registration_start, cycle_init, cycle_end} = req.body;
+    // Actualizar la relacion de un lenguaje existente con un perfil
+    const data = true
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+async function getPeriods(req, res) { 
+    // Actualizar la relacion de un lenguaje existente con un perfil
+    const data = [
+        {
+            id: 20232, 
+            registration_start: "2023/09/21",
+            cycle_init: "2023/09/21", 
+            cycle_end: "2023/09/21",
+        },
+        {
+            id: 20231, 
+            registration_start: "2023/09/21",
+            cycle_init: "2023/09/21", 
+            cycle_end: "2023/09/21",
+        },
+    ]
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
 
 
 module.exports = {
     getLocations,
     getLanguage,
     getEmailsSystem,
+    updateEmailsSystem,
     setMyLenguage,
     updateMyLenguage,
     setMyCertificate,
     updateMyCertificate,
     deleteMyCertificate,
-    deleteMyLenguage
+    deleteMyLenguage,
+    getSectors,
+    maintenanceSysData,
+    createPeriod,
+    getPeriods
 }

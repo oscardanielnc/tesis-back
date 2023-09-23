@@ -5,10 +5,10 @@ const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
 
 async function singIn(req, res) { 
-    const {attr, value} = req.params;
+    const {attr, value, photo} = req.body;
 
     const user = {
-        id: '100',
+        id: '10',
         role: "STUDENT",
         name: 'Oscar Navarro',
         lastname: 'Navarro Cieza',
@@ -37,14 +37,15 @@ async function singIn(req, res) {
         max_cycles: 12,
         ruc: '2030405060',
         phone: '929178606',
-        sector: 'Consultoría',
+        sector: '1',
+        sector_name: 'Consultoría',
         numEmployees: '100 - 1000',
         job: 'Lead Manager',
         expire: new Date(),
         score: 4.7,
         enterprise_name: "IBM del Perú",
         reader: true,
-        signatory: false,
+        signatory: true,
         recruiter: true,
         enterprise_id: '100'
     }
@@ -67,8 +68,8 @@ async function signUp(req, res) {
 
 
     const user = {
-        id: '100',
-        role: "EMPLOYED",
+        id: '1009',
+        role: "ENTERPRISE",
         name: 'Oscar Navarro',
         lastname: 'Navarro Cieza',
         cv_path: '',

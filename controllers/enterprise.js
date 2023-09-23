@@ -86,9 +86,57 @@ async function enterpriseExist(req, res) {
     // connection.end();
 
 }
+async function getEnterprises(req, res) { 
+    const {value} = req.body;
+
+    const data = [
+        {
+            id: '1',
+            name: 'IBM del Peru',
+            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
+            ruc: '2030405060',
+            update_date: '08/08/2023',
+            active: true
+        },
+        {
+            id: '2',
+            name: 'IBM del Peru',
+            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
+            ruc: '2030405060',
+            update_date: '08/08/2023',
+            active: true
+        },
+        {
+            id: '3',
+            name: 'IBM del Peru',
+            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
+            ruc: '2030405060',
+            update_date: '08/08/2023',
+            active: true
+        },
+    ]
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
+
+async function updateEnterprise(req, res) { 
+    const {id, active} = req.body;
+
+    const data = true
+
+    res.status(200).send(data);
+
+    // connection.end();
+
+}
 
 
 module.exports = {
     enterpriseData,
-    enterpriseExist
+    enterpriseExist,
+    getEnterprises,
+    updateEnterprise
 }

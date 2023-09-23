@@ -116,6 +116,10 @@ async function getAgreementState(req, res) {
         student_id: '100',
         modality: 'Presencial',
         description: 'text text text text',
+        observation_student: 'text text text text',
+        observation_ie: '',
+        observation_date_st: '2023/09/09',
+        observation_date_ie: '',
         list: [
             {
                 id: '200',
