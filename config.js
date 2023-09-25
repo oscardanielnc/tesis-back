@@ -4,11 +4,11 @@ const PORT_SERVER = process.env.PORT || 8080;
 const PSP_KEY = "pandita69";
 
 const MYSQL_CREDENTIALS = {
-    host     : 'devpandadb.c5sbfmi8wxnv.us-east-1.rds.amazonaws.com',
+    host     : 'tesis.cpbm1yjm50ia.us-east-1.rds.amazonaws.com',
     port     : 3306,
     user     : 'admin',
-    password : 'DevPanda123%',
-    database : 'DevPandaDB'
+    password : 'tesis2oscar6',
+    database : 'tesis'
 };
 
 

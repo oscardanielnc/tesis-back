@@ -48,7 +48,7 @@ async function getJobs(req, res) {
         },
     ]
 
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 
@@ -95,7 +95,7 @@ async function getJobByCode(req, res) {
         ]
     }
 
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 
@@ -105,7 +105,7 @@ async function applyJob(req, res) {
     const {idUser, code} = req.body;
 
     const data = true
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 
@@ -115,7 +115,7 @@ async function createJob(req, res) {
     const {job,salary,date_end,modality,vacancies,max,job_start,job_end,sections} = req.body;
 
     const data = {success: true, code: 'C567'}
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 
@@ -124,7 +124,7 @@ async function updateJob(req, res) {
     const {job_title,code,date_end,job_start,job_end,salary,
         modality,vacancies,max_applicants,sections} = req.body;
     const data = true
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 

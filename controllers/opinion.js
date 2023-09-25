@@ -8,7 +8,7 @@ async function setMyOpinion(req, res) {
     const {enterprise_name,score,date_update,description,student,student_id,ruc} = req.body
     const data = true;
 
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 
@@ -18,7 +18,7 @@ async function updateMyOpinion(req, res) {
 
     const data = true;
 
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 

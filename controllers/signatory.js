@@ -10,7 +10,7 @@ async function addSignatory(req, res) {
         
     const result = true
 
-    res.status(200).send(result);
+    res.status(200).send({result: result, success: true, message: ""});
 
     // connection.end();
 }
@@ -20,7 +20,7 @@ async function updateSignatory(req, res) {
         
     const result = true
 
-    res.status(200).send(result);
+    res.status(200).send({result: result, success: true, message: ""});
 
     // connection.end();
 }
@@ -61,7 +61,7 @@ async function getSignatories(req, res) {
         },
     ]
 
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 }

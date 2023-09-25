@@ -115,7 +115,7 @@ async function studentData(req, res) {
         ]
     }
 
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 
@@ -193,7 +193,7 @@ async function getStudents(req, res) {
         },
     ]
 
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 
@@ -204,7 +204,7 @@ async function contractStudent(req, res) {
     
     const data = true
 
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 

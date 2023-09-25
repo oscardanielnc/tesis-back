@@ -91,7 +91,7 @@ async function getAgreements(req, res) {
 
     ]
 
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 
@@ -148,7 +148,7 @@ async function getAgreementState(req, res) {
         ]
     }
 
-    res.status(200).send(data);
+    res.status(200).send({result: data, success: true, message: ""});
 
     // connection.end();
 

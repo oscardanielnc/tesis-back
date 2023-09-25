@@ -13,7 +13,7 @@ async function updateProfessor(req, res) {
         
     const result = true
 
-    res.status(200).send(result);
+    res.status(200).send({result: result, success: result, message: ""});
 
     // connection.end();
 }
