@@ -3,69 +3,127 @@ const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
 const moment = require("moment");
 const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
+const { getDateByNumber } = require('../utils/general-functions');
 
 async function employedData(req, res) { 
-    const {idUser} = req.params;
+    const {idUser,enterprise_id} = req.params;
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de estudiante";
 
-    const data = {
-        ads: [
-            {
-                job_title: "Desarrollador de software",
-                enterprise_name: "IBM del Perú", 
-                date_end: "08-08-2023",
-                code: 'C0987',
-                enterprise_id: '200',
-                description: 'Breve descripsión del puesto de trabajo...'
-            },
-            {
-                job_title: "Desarrollador de software",
-                enterprise_name: "IBM del Perú", 
-                date_end: "08-08-2023",
-                code: 'C0987',
-                enterprise_id: '200',
-                description: 'Breve descripsión del puesto de trabajo...'
-            },
-            {
-                job_title: "Desarrollador de software",
-                enterprise_name: "IBM del Perú", 
-                date_end: "08-08-2023",
-                code: 'C0987',
-                enterprise_id: '200',
-                description: 'Breve descripsión del puesto de trabajo...'
-            },
-        ],
-        agreements: [
-            {
-                job_title: "Desarrollador de software",
-                date_sign: "08-08-2023",
-                id: '1234'
-            },
-            {
-                job_title: "Desarrollador de software",
-                date_sign: "08-08-2023",
-                id: '1234'
-            },
-            {
-                job_title: "Desarrollador de software",
-                date_sign: "08-08-2023",
-                id: '1234'
-            },
-            {
-                job_title: "Desarrollador de software",
-                date_sign: "08-08-2023",
-                id: '1234'
-            },
-            {
-                job_title: "Desarrollador de software",
-                date_sign: "08-08-2023",
-                id: '1234'
-            },
-        ]
+    const user = {
+        ads: [],
+        agreements: []
     }
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        let sqlQuery = `SELECT * FROM job WHERE id_enterprise=${enterprise_id} AND active=1 ORDER BY end_ad_date;`
+        result =  await sqlAsync(sqlQuery, connection);
+        for(let it of result) {
+            const sql = `SELECT * FROM benefit WHERE id_job=${it.id_job} AND active=1;`
+            const r =  await sqlAsync(sql, connection);
+            let desc = '';
+            if(r.length>0) desc = r[0].descripcion;
 
-    // connection.end();
+            const item = {
+                job_title: it.title,
+                enterprise_name: '',
+                date_end: it.end_ad_date,
+                code: `${it.id_job}`,
+                enterprise_id: enterprise_id,
+                description: desc.substring(0,60)
+            }
+            if(item.date_end > nowTime()) user.ads.push(item)
+        }
+
+        sqlQuery = `SELECT * FROM agreement WHERE id_employed=${idUser} AND active=1;`
+        result =  await sqlAsync(sqlQuery, connection);
+        for(let it of result) {
+            const sqlj = `SELECT * FROM job WHERE id_job=${it.id_job};`
+            const j =  await sqlAsync(sqlj, connection);
+            const job = j[0];
+
+            const item = {
+                job_title: job.title,
+                id: it.id_agreement,
+                date_sign: getDateByNumber(it.date_enterprise), 
+            }
+            user.agreements.push(item)
+        }
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: user, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
+
+    // const data = {
+    //     ads: [
+    //         {
+    //             job_title: "Desarrollador de software",
+    //             enterprise_name: "IBM del Perú", 
+    //             date_end: "08-08-2023",
+    //             code: 'C0987',
+    //             enterprise_id: '200',
+    //             description: 'Breve descripsión del puesto de trabajo...'
+    //         },
+    //         {
+    //             job_title: "Desarrollador de software",
+    //             enterprise_name: "IBM del Perú", 
+    //             date_end: "08-08-2023",
+    //             code: 'C0987',
+    //             enterprise_id: '200',
+    //             description: 'Breve descripsión del puesto de trabajo...'
+    //         },
+    //         {
+    //             job_title: "Desarrollador de software",
+    //             enterprise_name: "IBM del Perú", 
+    //             date_end: "08-08-2023",
+    //             code: 'C0987',
+    //             enterprise_id: '200',
+    //             description: 'Breve descripsión del puesto de trabajo...'
+    //         },
+    //     ],
+    //     agreements: [
+    //         {
+    //             job_title: "Desarrollador de software",
+    //             date_sign: "08-08-2023",
+    //             id: '1234'
+    //         },
+    //         {
+    //             job_title: "Desarrollador de software",
+    //             date_sign: "08-08-2023",
+    //             id: '1234'
+    //         },
+    //         {
+    //             job_title: "Desarrollador de software",
+    //             date_sign: "08-08-2023",
+    //             id: '1234'
+    //         },
+    //         {
+    //             job_title: "Desarrollador de software",
+    //             date_sign: "08-08-2023",
+    //             id: '1234'
+    //         },
+    //         {
+    //             job_title: "Desarrollador de software",
+    //             date_sign: "08-08-2023",
+    //             id: '1234'
+    //         },
+    //     ]
+    // }
 
 }
 

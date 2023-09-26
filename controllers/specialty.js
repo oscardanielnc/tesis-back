@@ -126,7 +126,6 @@ async function getSpecialties(req, res) {
     res.status(200).send({result: data, success: true, message: ""});
     connection.end();
 }
-
 async function createSpecialty(req, res) { 
     const {name, cycles, active} = req.body
     let result = false;

@@ -2,7 +2,7 @@ const mysql = require('mysql');
 const {MYSQL_CREDENTIALS} = require("../config");
 const { sqlAsync } = require('../utils/async');
 const {getScore} = require("./enterprise");
-const { getTimeDate } = require('../utils/general-functions');
+const { getTimeDate, getDateByNumber } = require('../utils/general-functions');
 
 async function signIn(req, res) { 
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
@@ -17,7 +17,7 @@ async function signIn(req, res) {
     });
 
     try {
-        const sqlQueryUser = `SELECT * FROM user WHERE ${attr}=${attr==='id'? value: `'${value}'`} AND active=1;`
+        const sqlQueryUser = `SELECT * FROM user WHERE ${attr==='id'?'id_user':attr}=${attr==='id'? value: `'${value}'`} AND active=1;`
         const resultLUser  = await sqlAsync(sqlQueryUser, connection);
 
         if(resultLUser.length===0) {
@@ -78,7 +78,7 @@ async function signUp(req, res) {
         const idUser = resultUser.insertId;
 
         if(idUser && idUser >= 0) {
-            const sqlQueryLoc = `SELECT name FROM location WHERE id_location=${location};`
+            const sqlQueryLoc = `SELECT * FROM location WHERE id_location=${location};`
             const resultLoc  = await sqlAsync(sqlQueryLoc, connection);
 
             if(resultLoc.length>0) {
@@ -128,7 +128,7 @@ async function signUp(req, res) {
                 const {score,num_opinios} = await getScore(idUser,connection);
 
                 if(resultType.affectedRows) {
-                    const sqlQuerySec = `SELECT name FROM sector WHERE id_sector=${sector};`
+                    const sqlQuerySec = `SELECT * FROM sector WHERE id_sector=${sector};`
                     const resultSec  = await sqlAsync(sqlQuerySec, connection);
 
                     if(resultSec.length>0) {
@@ -158,7 +158,7 @@ async function signUp(req, res) {
                 if(resultEnt.length>0) {
                     const ent = resultEnt[0]
 
-                    const sqlQueryu = `SELECT name FROM user WHERE id_user=${ent.id_user};`
+                    const sqlQueryu = `SELECT * FROM user WHERE id_user=${ent.id_user};`
                     const resultu  = await sqlAsync(sqlQueryu, connection);
 
                     if(resultu.length>0) {
@@ -205,7 +205,7 @@ async function signUp(req, res) {
                     values(${idUser},${language},'Avanzado',1);`
                 const resultType  = await sqlAsync(sqlQueryType, connection);
                 if(resultType.affectedRows) {
-                    const sqlQueryl = `SELECT name FROM language WHERE id_language=${language};`
+                    const sqlQueryl = `SELECT * FROM language WHERE id_language=${language};`
                     const resultl  = await sqlAsync(sqlQueryl, connection);
 
                     if(resultl.length>0) {
@@ -216,7 +216,7 @@ async function signUp(req, res) {
                         }
 
                         user.languages.push({
-                            value: `${resultType.insertId}`,
+                            value: `${l.id_language}`,
                             name: l.name,
                             level: 'Avanzado'
                         })
@@ -246,27 +246,66 @@ async function signUp(req, res) {
 }
 async function updateProfile(req, res) {
 
-    const {role,name,lastname,photo,location,
-        date,code,specialty,cycle,ruc,phone,sector,
-        numEmployees,job} = req.body;
+    const {id,role,name,lastname,location,
+        code,specialty,cycle,phone,sector,
+        numEmployees,job,description} = req.body;
+    const cycleNum = cycle=='Egresado'? -1: cycle
         
-    const result = true
+    let result = false
+    let error = "Error en la actualización del usuario";
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    res.status(200).send({result: true, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
 
-    // connection.end();
+    try {
+        let sqlQuery = `UPDATE user SET name='${name}',id_location=${location},description='${description}'`
+        if(lastname && lastname!='' && role!=="ENTERPRISE") sqlQuery += `,lastname='${lastname}'`;
+        sqlQuery += ` WHERE id_user=${id};`;
+        const res = await sqlAsync(sqlQuery, connection);
+
+        if(res.affectedRows) {
+            if(role==='STUDENT') {
+                let sql = `UPDATE student SET code='${code}',id_specialty=${specialty},cycle=${cycleNum} WHERE id_user=${id};`
+                const r = await sqlAsync(sql, connection);
+
+                if(r.affectedRows) result = true;
+            }
+            else if(role==='ENTERPRISE') {
+                let sql = `UPDATE enterprise SET phone='${phone}',id_sector=${sector},num_employees='${numEmployees}' WHERE id_user=${id};`
+                const r = await sqlAsync(sql, connection);
+
+                if(r.affectedRows) result = true;
+            }
+            else if(role==='EMPLOYED') {
+                let sql = `UPDATE employed SET phone='${phone}',job='${job}' WHERE id_user=${id};`
+                const r = await sqlAsync(sql, connection);
+
+                if(r.affectedRows) result = true;
+            }
+        }
+
+    } catch(e) {
+        console.log(e)
+        error = e.message
+        result = false
+    }
+
+    res.status(200).send({result: result, success: result, message: error});
 }
-
 async function getUser(resultLUser, connection,photo) {
     const idUser = resultLUser.id_user
     let result = false;
     let error = "No se ha encontrado al usuario"
-    let user = {photo}
+    let user = {}
 
     try {
         if(idUser && idUser >= 0) {
-            const sqlQuery = `UPDATE user SET photo='${photo}' WHERE id_user=${idUser};`
-            await sqlAsync(sqlQuery, connection);
+            if(photo&&photo!='') {
+                const sqlQuery = `UPDATE user SET photo='${photo}' WHERE id_user=${idUser};`
+                await sqlAsync(sqlQuery, connection);
+            }
         
             user = {
                 ...user,
@@ -279,10 +318,11 @@ async function getUser(resultLUser, connection,photo) {
                 languages: [],
                 description: resultLUser.description,
                 date: resultLUser.birstdate,
-                active: resultLUser.active==1
+                active: resultLUser.active==1,
+                photo: photo&&photo!=''? photo: resultLUser.phone
             }
     
-            const sqlQueryLoc = `SELECT name FROM location WHERE id_location=${resultLUser.id_location};`
+            const sqlQueryLoc = `SELECT * FROM location WHERE id_location=${resultLUser.id_location};`
             const resultLoc  = await sqlAsync(sqlQueryLoc, connection);
     
             if(resultLoc.length>0) {
@@ -304,7 +344,7 @@ async function getUser(resultLUser, connection,photo) {
                         code: typeUser.code,
                         cycle: typeUser.cycle,
                         cv_path: typeUser.cv_path,
-                        uploadDateCV: typeUser.cv_update,
+                        uploadDateCV: getDateByNumber(typeUser.cv_update),
                         id_specialty: typeUser.id_specialty
                     }
                     result = true;
@@ -320,7 +360,7 @@ async function getUser(resultLUser, connection,photo) {
                     if(resultType.length>0) {
                         const typeUser = resultType[0]
     
-                        const sqlQuerySec = `SELECT name FROM sector WHERE id_sector=${typeUser.id_sector};`
+                        const sqlQuerySec = `SELECT * FROM sector WHERE id_sector=${typeUser.id_sector};`
                         const resultSec  = await sqlAsync(sqlQuerySec, connection);
     
                         if(resultSec.length>0) {
@@ -357,12 +397,12 @@ async function getUser(resultLUser, connection,photo) {
         
                         user = {
                             ...user,
-                            phone: resultType.phone,
-                            job: resultType.job,
+                            phone: typeUser.phone,
+                            job: typeUser.job,
                             enterprise_name: emp.name,
-                            reader: resultType.reader==1,
-                            signatory: resultType.signatory==1,
-                            recruiter: resultType.recruiter==1,
+                            reader: typeUser.reader==1,
+                            signatory: typeUser.signatory==1,
+                            recruiter: typeUser.recruiter==1,
                             enterprise_id: `${typeUser.id_enterprise}`
                         }
                         result = true;
@@ -392,12 +432,12 @@ async function getUser(resultLUser, connection,photo) {
     
             if(result) {
                 
-                const sqlQueryType = `SELECT * FROM userxlanguage WHERE id_user=${idUser};`
+                const sqlQueryType = `SELECT * FROM userxlanguage WHERE id_user=${idUser} AND active=1;`
                 const resultType  = await sqlAsync(sqlQueryType, connection);
 
                 if(resultType.length>0) {
                     for(let uxl of resultType) {
-                        const sqlQueryl = `SELECT name FROM language WHERE id_language=${uxl.id_language};`
+                        const sqlQueryl = `SELECT * FROM language WHERE id_language=${uxl.id_language};`
                         const resultl  = await sqlAsync(sqlQueryl, connection);
 
                         if(resultl.length>0) {
@@ -447,47 +487,3 @@ module.exports = {
     signUp,
     updateProfile
 }
-
-
-    // const user = {
-    //     id: '1009',
-    //     role: "ENTERPRISE",
-    //     name: 'Oscar Navarro',
-    //     lastname: 'Navarro Cieza',
-    //     cv_path: '',
-    //     email: 'oscar.navarro@pucp.edu.pe',
-    //     photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-    //     location: '2',
-    //     location_name: 'Lima',
-    //     uploadDateCV: '2002-08-30',
-    //     languages: [
-    //         {
-    //             value: '1',
-    //             name: 'Español',
-    //             level: 'Avanzado'
-    //         },
-    //         {
-    //             value: '2',
-    //             name: 'Inglés',
-    //             level: 'Básico'
-    //         },
-    //     ],
-    //     description: "Estudiante de 9no ciclo de la carrera de ingeniería informática. Tercio superior. Inglés intermedio según Idiomas Católica. Con especial interés en el desarrollo de software y la experiencia de usuario (UX). Trabajé en la empresa IBM ayudando a sus clientes con el desarrollo y mantenimiento de sus aplicaciones. Full stack developer en web y mobile, especializado en Frontend. Autodidacta. Disfruto de enseñar lo que aprendo y de trabajar en equipo.",
-    //     date: '2002-08-30',
-    //     code: '20186008',
-    //     specialty: 'Ingeniería informática',
-    //     cycle: 8,
-    //     max_cycles: 12,
-    //     ruc: '2030405060',
-    //     phone: '929178606',
-    //     sector: 'Consultoría',
-    //     numEmployees: '100 - 1000',
-    //     job: 'Lead Manager',
-    //     expire: new Date(),
-    //     score: 4.7,
-    //     enterprise_name: "IBM del Perú",
-    //     reader: true,
-    //     signatory: false,
-    //     recruiter: true,
-    //     enterprise_id: '100'
-    // }

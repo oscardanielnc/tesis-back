@@ -3,6 +3,7 @@ const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
 const moment = require("moment");
 const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
+const { getTimeDate } = require('../utils/general-functions');
 
 async function getLocations(req, res) {
     const {name} = req.body;
@@ -143,65 +144,171 @@ async function updateEmailsSystem(req, res) {
 
 }
 async function setMyLenguage(req, res) { 
-    // Relacionar un lenguaje existente con un perfil
     const {idUser, idLanguage, level} = req.body
-    const data = true
+    let success = false;
+    let message = "Error en el servicio de lenguajes"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `INSERT INTO userxlanguage(id_user,id_language,level,active) 
+            values(${idUser},${idLanguage},'${level}',1);`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) success = true
 
-    // connection.end();
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
 
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 }
 async function updateMyLenguage(req, res) { 
-    // Actualizar la relacion de un lenguaje existente con un perfil
     const {idUser, idLanguage, level} = req.body
-    const data = true
+    let success = false;
+    let message = "Error en el servicio de lenguajes"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `UPDATE userxlanguage SET level='${level}' WHERE id_user=${idUser} AND id_language=${idLanguage};`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) success = true
 
-    // connection.end();
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
 
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 }
 async function deleteMyLenguage(req, res) { 
-    // Actualizar la relacion de un lenguaje existente con un perfil
     const {userId, lanId} = req.body
-    const data = true
+    let success = false;
+    let message = "Error en el servicio de lenguajes"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `UPDATE userxlanguage SET active=0 WHERE id_user=${userId} AND id_language=${lanId};`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) success = true
 
-    // connection.end();
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
 
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 }
 async function setMyCertificate(req, res) { 
-    const {title,enterprise_name,icon,date_init,date_end,description,enterprise_id,enterprise_photo,ruc,type} = req.body;
-    // Actualizar la relacion de un lenguaje existente con un perfil
-    const {idUser, idLanguage, level} = req.body
-    const data = {success: true, id: '1232222'}
+    const {idUser,title,enterprise_name,icon,date_init,date_end,descripcion,enterprise_id,enterprise_photo,ruc,type} = req.body;
+    console.log(req.body)
 
-    res.status(200).send({result: data, success: true, message: ""});
+    let success = false;
+    let message = "Error en el servicio de certificados"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    // connection.end();
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `INSERT INTO certificate(id_user,type,title,icon,date_init,date_end,
+            descripcion,enterprise_name,enterprise_photo,enterprise_id,ruc,active) 
+            values(${idUser},${type},'${title}',${icon},${getTimeDate(date_init)},${date_end==''? 0: getTimeDate(date_end)},
+            '${descripcion}','${enterprise_name}','${enterprise_photo}',${enterprise_id && enterprise_id!=''? enterprise_id: 0},'${ruc}',1);`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) success = true
 
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 }
 async function updateMyCertificate(req, res) { 
-    const {id,title,enterprise_name,icon,date_init,date_end,description,enterprise_id,enterprise_photo,ruc} = req.body;
-    // Actualizar la relacion de un lenguaje existente con un perfil
-    const {idUser, idLanguage, level} = req.body
-    const data = true
+    const {id,title,enterprise_name,icon,date_init,date_end,descripcion,enterprise_id,enterprise_photo,ruc} = req.body;
+    let success = false;
+    let message = "Error en el servicio de certificados"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `UPDATE certificate SET title='${title}',enterprise_name='${enterprise_name}',
+        icon=${icon},date_init=${getTimeDate(date_init)},date_end=${date_end==''? 0: getTimeDate(date_end)},
+        descripcion='${descripcion}',enterprise_id=${enterprise_id && enterprise_id!=''? enterprise_id: 0},
+        enterprise_photo='${enterprise_photo}',ruc='${ruc}' WHERE id_certificate=${id};`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) success = true
 
-    // connection.end();
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 
 }
 async function deleteMyCertificate(req, res) { 
-    // Actualizar la relacion de un lenguaje existente con un perfil
     const {id} = req.body
-    const data = true
+    console.log(req.body)
+    let success = false;
+    let message = "Error en el servicio de certificados"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `UPDATE certificate SET active=0 WHERE id_certificate=${id};`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) success = true
 
-    // connection.end();
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 
 }
 async function maintenanceSysData(req, res) { 

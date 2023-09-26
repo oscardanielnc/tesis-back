@@ -7,14 +7,6 @@ const { sqlAsync } = require('../utils/async');
 async function getAgreements(req, res) { 
     const {job,enterprise,student,employed,location,modality,
         salary_min,salary_max,state,date_end,date_init} = req.body;
-
-    
-
-    //agreement 
-    // const sql1 = `SELECT * FROM agreement WHERE active=1`
-    // const response1 = {}
-    //user
-    // const sql2 = `SELECT * FROM user WHERE id_user=${response1.id_student\response1.id_enterprise}`
     
 
     const data = [

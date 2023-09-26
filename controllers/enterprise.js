@@ -5,70 +5,73 @@ const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
 
 async function enterpriseData(req, res) { 
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
     const {idUser} = req.params;
 
-    const data = {
-        ads: [
-            {
-                job_title: "Desarrollador de software",
-                enterprise_name: "IBM del Perú", 
-                date_end: "08-08-2023",
-                code: 'C0987',
-                description: 'Breve descripsión del puesto de trabajo...'
-            },
-            {
-                job_title: "Desarrollador de software",
-                enterprise_name: "IBM del Perú", 
-                date_end: "08-08-2023",
-                code: 'C0987',
-                description: 'Breve descripsión del puesto de trabajo...'
-            },
-            {
-                job_title: "Desarrollador de software",
-                enterprise_name: "IBM del Perú", 
-                date_end: "08-08-2023",
-                code: 'C0987',
-                description: 'Breve descripsión del puesto de trabajo...'
-            },
-        ],
-        opinions: [
-            {
-                id: '123',
-                enterprise_name: "IBM del Perú",
-                score: 4,
-                date_update: "08-08-2023",
-                description: "Experiencia excelente!",
-                student: "Oscar Navarro",
-                student_id: '100',
-                ruc: '20000000022'
-            },
-            {
-                id: '123',
-                enterprise_name: "IBM del Perú",
-                score: 4,
-                date_update: "08-08-2023",
-                description: "Experiencia excelente!",
-                student: "Oscar Navarro",
-                student_id: '100',
-                ruc: '20000000022'
-            },
-            {
-                id: '123',
-                enterprise_name: "IBM del Perú",
-                score: 4,
-                date_update: "08-08-2023",
-                description: "Experiencia excelente!",
-                student: "Oscar Navarro",
-                student_id: '100',
-                ruc: '20000000022'
-            },
-        ]
+    let success = false
+    let message = "Error en el servicio de estudiante";
+
+    const user = {
+        ads: [],
+        opinions: []
     }
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        let sqlQuery = `SELECT * FROM job WHERE id_enterprise=${idUser} AND active=1 ORDER BY end_ad_date;`
+        result =  await sqlAsync(sqlQuery, connection);
+        for(let it of result) {
+            const sql = `SELECT * FROM benefit WHERE id_job=${it.id_job} AND active=1;`
+            const r =  await sqlAsync(sql, connection);
+            let desc = '';
+            if(r.length>0) desc = r[0].descripcion;
 
-    // connection.end();
+            const item = {
+                job_title: it.title,
+                enterprise_name: '',
+                date_end: it.end_ad_date,
+                code: `${it.id_job}`,
+                description: desc.substring(0,60)
+            }
+            if(item.date_end > nowTime()) user.ads.push(item)
+        }
 
+        sqlQuery = `SELECT * FROM opinion WHERE id_enterprise=${idUser} AND active=1;`
+        result =  await sqlAsync(sqlQuery, connection);
+
+        let index = 0
+        for(let i=0; i<result.length && index<10; i++) {
+            const it = result[i]
+            const item = {
+                id: it.id_opinion,
+                enterprise_name: it.enterprise,
+                score: it.score,
+                date_update: getDateByNumber(it.update_date),
+                description: it.descripcion,
+                student: it.student,
+                student_id: `${it.id_creator}`,
+                id_enterprise: `${idUser}`,
+            }
+            user.opinions.push(item)
+            index++
+        }
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: user, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
 }
 
 async function enterpriseExist(req, res) { 
@@ -76,6 +79,7 @@ async function enterpriseExist(req, res) {
 
     let result = {
         exist: false,
+        id: '',
         ruc: '',
         name: '',
         photo: ''
@@ -110,14 +114,6 @@ async function enterpriseExist(req, res) {
     
     res.status(200).send({result: result, success: true, message: ""});
     connection.end();
-
-    // const data = {
-    //     exist: true,
-    //     ruc: ruc,
-    //     name: "IBM de Peru",
-    //     photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
-    // };
-    // res.status(200).send({result: data, success: true, message: ""});
 
 }
 async function getEnterprises(req, res) { 
