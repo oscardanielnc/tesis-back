@@ -319,7 +319,7 @@ async function getUser(resultLUser, connection,photo) {
                 description: resultLUser.description,
                 date: resultLUser.birstdate,
                 active: resultLUser.active==1,
-                photo: photo&&photo!=''? photo: resultLUser.phone
+                photo: photo&&photo!=''? photo: resultLUser.photo
             }
     
             const sqlQueryLoc = `SELECT * FROM location WHERE id_location=${resultLUser.id_location};`
@@ -485,5 +485,6 @@ async function getUser(resultLUser, connection,photo) {
 module.exports = {
     signIn,
     signUp,
-    updateProfile
+    updateProfile,
+    getUser
 }

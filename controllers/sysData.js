@@ -224,7 +224,6 @@ async function deleteMyLenguage(req, res) {
 }
 async function setMyCertificate(req, res) { 
     const {idUser,title,enterprise_name,icon,date_init,date_end,descripcion,enterprise_id,enterprise_photo,ruc,type} = req.body;
-    console.log(req.body)
 
     let success = false;
     let message = "Error en el servicio de certificados"
@@ -285,7 +284,6 @@ async function updateMyCertificate(req, res) {
 }
 async function deleteMyCertificate(req, res) { 
     const {id} = req.body
-    console.log(req.body)
     let success = false;
     let message = "Error en el servicio de certificados"
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);

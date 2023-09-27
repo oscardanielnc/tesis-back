@@ -3,6 +3,7 @@ const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
 const moment = require("moment");
 const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
+const { nowTime } = require('../utils/general-functions');
 
 async function enterpriseData(req, res) { 
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
@@ -73,7 +74,6 @@ async function enterpriseData(req, res) {
     }
     connection.end();
 }
-
 async function enterpriseExist(req, res) { 
     const {ruc} = req.params;
 
@@ -168,8 +168,8 @@ async function getScore(id_enterprise,connection) {
     // const resultOp  = await sqlAsync(sqlQueryOp, connection);
 
     return {
-        score: 4.5,
-        num_opinios: 2
+        score: 0,
+        num_opinios: 0
     }
 }
 

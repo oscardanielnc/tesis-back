@@ -1,9 +1,7 @@
 const mysql = require('mysql');
-const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
-const moment = require("moment");
-const jwt = require("jwt-simple");
+const {MYSQL_CREDENTIALS} = require("../config");;
 const { sqlAsync } = require('../utils/async');
-const { getDateByNumber } = require('../utils/general-functions');
+const { getDateByNumber, nowTime } = require('../utils/general-functions');
 
 async function employedData(req, res) { 
     const {idUser,enterprise_id} = req.params;
@@ -22,7 +20,9 @@ async function employedData(req, res) {
     try{
         let sqlQuery = `SELECT * FROM job WHERE id_enterprise=${enterprise_id} AND active=1 ORDER BY end_ad_date;`
         result =  await sqlAsync(sqlQuery, connection);
-        for(let it of result) {
+        let index=0;
+        for(let i=0; i<result.length && index<5;i++) {
+            const it = result[i]
             const sql = `SELECT * FROM benefit WHERE id_job=${it.id_job} AND active=1;`
             const r =  await sqlAsync(sql, connection);
             let desc = '';
@@ -31,12 +31,13 @@ async function employedData(req, res) {
             const item = {
                 job_title: it.title,
                 enterprise_name: '',
-                date_end: it.end_ad_date,
+                date_end: getDateByNumber(it.end_ad_date),
                 code: `${it.id_job}`,
                 enterprise_id: enterprise_id,
                 description: desc.substring(0,60)
             }
             if(item.date_end > nowTime()) user.ads.push(item)
+            index++
         }
 
         sqlQuery = `SELECT * FROM agreement WHERE id_employed=${idUser} AND active=1;`
@@ -68,116 +69,92 @@ async function employedData(req, res) {
         })
     }
     connection.end();
-
-    // const data = {
-    //     ads: [
-    //         {
-    //             job_title: "Desarrollador de software",
-    //             enterprise_name: "IBM del Perú", 
-    //             date_end: "08-08-2023",
-    //             code: 'C0987',
-    //             enterprise_id: '200',
-    //             description: 'Breve descripsión del puesto de trabajo...'
-    //         },
-    //         {
-    //             job_title: "Desarrollador de software",
-    //             enterprise_name: "IBM del Perú", 
-    //             date_end: "08-08-2023",
-    //             code: 'C0987',
-    //             enterprise_id: '200',
-    //             description: 'Breve descripsión del puesto de trabajo...'
-    //         },
-    //         {
-    //             job_title: "Desarrollador de software",
-    //             enterprise_name: "IBM del Perú", 
-    //             date_end: "08-08-2023",
-    //             code: 'C0987',
-    //             enterprise_id: '200',
-    //             description: 'Breve descripsión del puesto de trabajo...'
-    //         },
-    //     ],
-    //     agreements: [
-    //         {
-    //             job_title: "Desarrollador de software",
-    //             date_sign: "08-08-2023",
-    //             id: '1234'
-    //         },
-    //         {
-    //             job_title: "Desarrollador de software",
-    //             date_sign: "08-08-2023",
-    //             id: '1234'
-    //         },
-    //         {
-    //             job_title: "Desarrollador de software",
-    //             date_sign: "08-08-2023",
-    //             id: '1234'
-    //         },
-    //         {
-    //             job_title: "Desarrollador de software",
-    //             date_sign: "08-08-2023",
-    //             id: '1234'
-    //         },
-    //         {
-    //             job_title: "Desarrollador de software",
-    //             date_sign: "08-08-2023",
-    //             id: '1234'
-    //         },
-    //     ]
-    // }
-
 }
-
-
 async function getEmployees(req, res) { 
-    const {name,job,reader,signatory,recruiter} = req.body;
+    const {name,job,reader,signatory,recruiter,flag} = req.body;
 
-    const data = [
-        {
-            name: "Juan León Osorio",
-            job: "Comunity Manager", 
-            date_update: '08-08-2023',
-            user_id: '2030',
-            reader: true,
-            signatory: true,
-            recruiter: true,
-            user_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
-        },
-        {
-            name: "Juan León Osorio",
-            job: "Comunity Manager", 
-            date_update: '08-08-2023',
-            user_id: '200',
-            reader: true,
-            signatory: false,
-            recruiter: false,
-            user_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
-        },
-        {
-            name: "Juan León Osorio",
-            job: "Comunity Manager", 
-            date_update: '08-08-2023',
-            user_id: '20220',
-            reader: false,
-            signatory: false,
-            recruiter: false,
-            user_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
-        },
-    ]
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de empleados";
 
-    res.status(200).send({result: data, success: true, message: ""});
+    const data = []
 
-    // connection.end();
+    connection.connect(err => {
+        if (err) throw err;
+    });
 
+    try{
+        let sqlQuery = `SELECT U.id_user, U.name, U.lastname, U.photo, U.update_state, E.job, 
+        E.reader, E.signatory, E.recruiter FROM user AS U INNER JOIN employed AS E 
+        ON U.id_user = E.id_user WHERE CONCAT(U.name, ' ', U.lastname) like '%${name}%' AND E.job like '%${job}%'`;
+        if(reader) sqlQuery += ` AND E.reader=${flag?1:0}`;
+        if(signatory) sqlQuery += ` AND E.signatory=${flag?1:0}`;
+        if(recruiter) sqlQuery += ` AND E.recruiter=${flag?1:0}`;
+
+        result =  await sqlAsync(sqlQuery, connection);
+        for(let it of result) {
+            const item = {
+                name: `${it.name} ${it.lastname}`,
+                job: it.job,
+                date_update: getDateByNumber(it.update_state),
+                user_id: it.id_user,
+                reader: it.reader==1,
+                signatory: it.signatory==1,
+                recruiter: it.recruiter==1,
+                user_photo: it.photo,
+            }
+            data.push(item)
+        }
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: data, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
 }
 async function changePrivToEmployed(req, res) { 
-    const {name,job,reader,signatory,recruiter} = req.body;
-    
-    const data = true
+    const {user_id,reader,signatory,recruiter} = req.body;
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de empleados";
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
 
-    // connection.end();
+    try{
+        let sqlQuery = `UPDATE employed SET reader=${reader?1:0},signatory=${signatory?1:0},
+        recruiter=${recruiter?1:0} WHERE id_user=${user_id}`;
+        const result =  await sqlAsync(sqlQuery, connection);
 
+        if (result.affectedRows) {
+            let sql = `UPDATE user SET update_state=${nowTime()} WHERE id_user=${user_id}`;
+            const r =  await sqlAsync(sql, connection);
+            if (r.affectedRows) success = true
+        }
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: success, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
 }
 
 
