@@ -3,7 +3,7 @@ const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
 const moment = require("moment");
 const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
-const { nowTime, getDateByNumber } = require('../utils/general-functions');
+const { nowTime, getDateByNumber, matchBetween, getAttrById, getTimeDate } = require('../utils/general-functions');
 
 async function studentData(req, res) { 
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
@@ -106,91 +106,123 @@ async function studentData(req, res) {
 }
 
 async function getStudents(req, res) { 
-    const {student,location,languages,specialty,oderby,type} = req.body
+    const {student,location,languages,specialty,oderby,type,code} = req.body
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de estudiantes";
 
-    const data = [
-        {
-            name: 'Oscar Navarro',
-            specialty: 'Ingeniería informática',
-            cycle: 10,
-            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-            id: '10s0',
-            cv_update: "08/08/2023",
-            cv_path: '11',
-            hired: false,
-            languages: [
-                {
-                    value: '1',
-                    name: 'Español',
-                    level: 'Avanzado'
-                },
-                {
-                    value: '2',
-                    name: 'Inglés',
-                    level: 'Básico'
-                },
-            ],
-        },
-        {
-            name: 'Oscar Navarro',
-            specialty: 'Ingeniería informática',
-            cycle: 10,
-            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-            id: '10w0',
-            cv_update: "08/08/2023",
-            cv_path: '11',
-            hired: false,
-            languages: [
-                {
-                    value: '1',
-                    name: 'Español',
-                    level: 'Avanzado'
-                },
-                {
-                    value: '2',
-                    name: 'Inglés',
-                    level: 'Básico'
-                },
-            ],
-        },
-        {
-            name: 'Oscar Navarro',
-            specialty: 'Ingeniería informática',
-            cycle: 10,
-            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-            id: '100ws',
-            cv_update: "08/08/2023",
-            cv_path: '11',
-            hired: false,
-            languages: [
-                {
-                    value: '1',
-                    name: 'Español',
-                    level: 'Avanzado'
-                },
-                {
-                    value: '2',
-                    name: 'Inglés',
-                    level: 'Básico'
-                },
-            ],
-        },
-    ]
+    const data = []
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
 
-    // connection.end();
+    try{
+        let sqlQuery = `SELECT U.name, U.lastname, S.cycle, U.photo, U.id_user, S.cv_update, S.cv_path, J.relation,S.id_specialty
+        FROM studentxjob AS J
+        INNER JOIN student AS S ON S.id_user = J.id_student
+        INNER JOIN user AS U ON U.id_user = S.id_user
+        WHERE CONCAT(U.name, ' ', U.lastname) like '%${student}%' AND J.id_job=${code}`;
+        if(location!='') sqlQuery += ` AND U.id_location =${location}`
+        if(specialty!='') sqlQuery += ` AND S.id_specialty =${specialty}`
+        if(type!='' && type!='1') sqlQuery += ` AND J.relation ='${type}'`
+        if(oderby!='') sqlQuery += ` ORDER BY ${oderby=="1"? "S.cv_update": "S.cycle"}`
+        
+        const result = await sqlAsync(sqlQuery, connection);
+        
+        const sqlSpe = `SELECT * FROM specialty;`;
+        const arrSpecialties = await sqlAsync(sqlSpe, connection);
 
+        for(let it of result) {
+            const sqllans = `SELECT * FROM userxlanguage AS X
+            INNER JOIN language AS L ON X.id_language=L.id_language
+            WHERE X.id_user=${it.id_user} AND X.active=1;`;
+            const arrlans = await sqlAsync(sqllans, connection);
+
+            if(languages.length===0 || matchBetween(arrlans, languages, 'id_language')) {
+                const item = {
+                    name: `${it.name} ${it.lastname}`,
+                    specialty: getAttrById(arrSpecialties,'id_specialty',it.id_specialty, 'name'),//
+                    cycle: it.cycle,
+                    photo: it.photo,
+                    id: `${it.id_user}`,
+                    cv_update: getDateByNumber(it.cv_update),
+                    cv_path: it.cv_path,
+                    hired: it.relation=='C',
+                    languages: []
+                } 
+                for(let lan of arrlans) {
+                    const lang = {
+                        value: `${lan.id_language}`,
+                        name: lan.name,
+                        level: lan.level
+                    }
+                    item.languages.push(lang)
+                }
+                data.push(item)
+            }
+        }
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: data, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
 }
 
 async function contractStudent(req, res) { 
-    const {student, enterprise} = req.body;
-    
-    const data = true
+    const {name, id_student,id_enterprise, code,init_date,end_date} = req.body;
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de contratación";
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
 
-    // connection.end();
+    try{
+        let sqlQuery = `INSERT INTO agreement(name,document_path,id_job,id_student,id_enterprise,id_employed,id_signatory,
+            hash,date_student,date_enterprise,date_professor,init_date,end_date,observation_student,observation_ie,
+            observation_date_st,observation_date_ie,active) 
+        values('${name}','',${code},${id_student},${id_enterprise},null,null,
+        '',0,0,0,${getTimeDate(init_date)},${getTimeDate(end_date)},'','',
+        0,0,1);`;
+        let result =  await sqlAsync(sqlQuery, connection);
+
+        if (result.affectedRows) {
+            sqlQuery = `UPDATE studentxjob SET relation='C' WHERE id_student=${id_student} AND id_job=${code} AND active=1`;
+            let r =  await sqlAsync(sqlQuery, connection);
+
+            if (r.affectedRows) success = true
+        }
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: success, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
+    // const data = true
+
+    // res.status(200).send({result: data, success: true, message: ""});
+
+    // // connection.end();
 
 }
 

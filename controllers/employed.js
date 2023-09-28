@@ -19,7 +19,11 @@ async function employedData(req, res) {
     });
     try{
         let sqlQuery = `SELECT * FROM job WHERE id_enterprise=${enterprise_id} AND active=1 ORDER BY end_ad_date;`
-        result =  await sqlAsync(sqlQuery, connection);
+        let result =  await sqlAsync(sqlQuery, connection);
+        let sqlen = `SELECT * FROM user WHERE id_user=${enterprise_id};`
+        let entresult =  await sqlAsync(sqlen, connection);
+        const enterp = entresult.length>0? entresult[0]: {name: '(Empresa desconocida)', photo: ''}
+
         let index=0;
         for(let i=0; i<result.length && index<5;i++) {
             const it = result[i]
@@ -30,13 +34,14 @@ async function employedData(req, res) {
 
             const item = {
                 job_title: it.title,
-                enterprise_name: '',
+                enterprise_name: enterp.name,
+                enterprise_photo: enterp.photo,
                 date_end: getDateByNumber(it.end_ad_date),
                 code: `${it.id_job}`,
                 enterprise_id: enterprise_id,
-                description: desc.substring(0,60)
+                description: desc.substring(0,80)
             }
-            if(item.date_end > nowTime()) user.ads.push(item)
+            if(it.end_ad_date > nowTime()) user.ads.push(item)
             index++
         }
 

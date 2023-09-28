@@ -2,7 +2,22 @@ function exist (input) {
     if(!input || input=='') return false
     return true
 }
-
+function matchBetween(arr1,arr2,attr1,attr2=null) {
+    for(let i of arr1) {
+        for(let j of arr2) {
+            const n = i[attr1]
+            const m = attr2? j[attr2]: j
+            if(n==m) return true
+        }
+    }
+    return false
+}
+function getAttrById(arr,id,value,attr) {
+    for(let i of arr) {
+        if(i[id]==value) return i[attr]
+    }
+    return ''
+}
 function getTimeDate(string) {
     const arr = string.split("-")
     try {
@@ -36,5 +51,7 @@ module.exports = {
     exist,
     getTimeDate,
     nowTime,
-    getDateByNumber
+    getDateByNumber,
+    matchBetween,
+    getAttrById
 }

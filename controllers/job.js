@@ -73,47 +73,6 @@ async function getJobs(req, res) {
         })
     }
     connection.end();
-    // const data = [
-    //     {
-    //         job_title: "Desarrollador de software",
-    //         enterprise_name: "IBM del Perú", 
-    //         date_end: "08-08-2023",
-    //         code: 'C0987',
-    //         salary: 1025,
-    //         location: 'Lima',
-    //         modality: 'Virtual',
-    //         description: 'Breve descripsión del puesto de trabajo...',
-    //         enterprise_id: '200',
-    //         enterprise_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
-    //     },
-    //     {
-    //         job_title: "Desarrollador de software",
-    //         enterprise_name: "IBM del Perú", 
-    //         date_end: "08-08-2023",
-    //         code: 'C0987',
-    //         salary: 1025,
-    //         location: 'Lima',
-    //         modality: 'virtual',
-    //         description: 'Breve descripsión del puesto de trabajo...',
-    //         enterprise_id: '200',
-    //         enterprise_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
-    //     },
-    //     {
-    //         job_title: "Desarrollador de software",
-    //         enterprise_name: "IBM del Perú", 
-    //         date_end: "08-08-2023",
-    //         code: 'C0987',
-    //         salary: 1025,
-    //         location: 'Lima',
-    //         modality: 'virtual',
-    //         description: 'Breve descripsión del puesto de trabajo...',
-    //         enterprise_id: '200',
-    //         enterprise_photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c'
-    //     },
-    // ]
-
-    // res.status(200).send({result: data, success: true, message: ""});
-
 }
 async function getJobByCode(req, res) { 
     const {code,myId,iamStudent} = req.params;
@@ -147,12 +106,14 @@ async function getJobByCode(req, res) {
                 const tot = num.length>0? num[0]: {total:0}
 
                 let applied = false
+                let con = false
                 if(iamStudent=='1') {
                     const m = `SELECT * FROM studentxjob where active=1 AND id_student=${myId} AND id_job=${job.id_job};`
                     const mm = await sqlAsync(m, connection);
                     if(mm.length>0) {
                         const sxj = mm[0]
                         applied = sxj.relation==='P' || sxj.relation==='C';
+                        con = sxj.relation==='C';
                     }
                 }
 
@@ -175,6 +136,7 @@ async function getJobByCode(req, res) {
                     sections: [],
                     registered: tot.total,
                     alredy_applied: applied,
+                    contracted: con,
                     active: true
                 }
     

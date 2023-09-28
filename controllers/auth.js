@@ -249,7 +249,7 @@ async function updateProfile(req, res) {
     const {id,role,name,lastname,location,
         code,specialty,cycle,phone,sector,
         numEmployees,job,description} = req.body;
-    const cycleNum = cycle=='Egresado'? -1: cycle
+    const cycleNum = cycle=='Egresado'? 100: cycle
         
     let result = false
     let error = "Error en la actualización del usuario";
