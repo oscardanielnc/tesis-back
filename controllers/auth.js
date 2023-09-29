@@ -50,7 +50,6 @@ async function signIn(req, res) {
     connection.end();
 
 }
-
 async function signUp(req, res) {
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
     const {role,name,lastname,email,photo,location,language,
@@ -322,14 +321,16 @@ async function getUser(resultLUser, connection,photo) {
                 photo: photo&&photo!=''? photo: resultLUser.photo
             }
     
-            const sqlQueryLoc = `SELECT * FROM location WHERE id_location=${resultLUser.id_location};`
-            const resultLoc  = await sqlAsync(sqlQueryLoc, connection);
-    
-            if(resultLoc.length>0) {
-                const loc = resultLoc[0].name
-                user = {
-                    ...user,
-                    location_name: loc
+            if(resultLUser.id_location) {
+                const sqlQueryLoc = `SELECT * FROM location WHERE id_location=${resultLUser.id_location};`
+                const resultLoc  = await sqlAsync(sqlQueryLoc, connection);
+        
+                if(resultLoc.length>0) {
+                    const loc = resultLoc[0].name
+                    user = {
+                        ...user,
+                        location_name: loc
+                    }
                 }
             }
     

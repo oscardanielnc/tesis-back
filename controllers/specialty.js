@@ -1,6 +1,7 @@
 const mysql = require('mysql');
 const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
 const { sqlAsync } = require('../utils/async');
+const { getDateByNumber } = require('../utils/general-functions');
 
 async function getSpecialties(req, res) { 
     const {name, active, admin} = req.body
@@ -33,7 +34,7 @@ async function getSpecialties(req, res) {
                         name: p.name, 
                         last_name: p.lastname, 
                         coordinator: p.coordinator==1,
-                        update_date: p.update_state,
+                        update_date: getDateByNumber(p.update_state),
                         photo: p.photo,
                         active: p.active==1
                     }

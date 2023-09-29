@@ -1,7 +1,5 @@
 const mysql = require('mysql');
-const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
-const moment = require("moment");
-const jwt = require("jwt-simple");
+const {MYSQL_CREDENTIALS} = require("../config");
 const { sqlAsync } = require('../utils/async');
 const { nowTime, getDateByNumber, matchBetween, getAttrById, getTimeDate } = require('../utils/general-functions');
 

@@ -3,7 +3,7 @@ const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
 const moment = require("moment");
 const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
-const { nowTime } = require('../utils/general-functions');
+const { nowTime, getDateByNumber } = require('../utils/general-functions');
 
 async function enterpriseData(req, res) { 
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
@@ -119,47 +119,79 @@ async function enterpriseExist(req, res) {
 async function getEnterprises(req, res) { 
     const {value} = req.body;
 
-    const data = [
-        {
-            id: '1',
-            name: 'IBM del Peru',
-            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-            ruc: '2030405060',
-            update_date: '08/08/2023',
-            active: true
-        },
-        {
-            id: '2',
-            name: 'IBM del Peru',
-            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-            ruc: '2030405060',
-            update_date: '08/08/2023',
-            active: true
-        },
-        {
-            id: '3',
-            name: 'IBM del Peru',
-            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-            ruc: '2030405060',
-            update_date: '08/08/2023',
-            active: true
-        },
-    ]
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de empresas";
 
-    res.status(200).send({result: data, success: true, message: ""});
+    const data = []
 
-    // connection.end();
+    connection.connect(err => {
+        if (err) throw err;
+    });
 
+    try{
+        let sqlQuery = `SELECT U.name, U.photo, U.id_user, E.ruc, U.update_state, U.active
+            FROM enterprise AS E
+            INNER JOIN user AS U ON U.id_user = E.id_user
+            WHERE U.name like '%${value}%' OR E.ruc like '%${value}%';`;
+        
+        const result = await sqlAsync(sqlQuery, connection);
+
+        for(let it of result) {
+            
+            const item = {
+                id: `${it.id_user}`,
+                name: it.name,
+                photo: it.photo,
+                ruc: it.ruc,
+                update_date: getDateByNumber(it.update_state),
+                active: it.active==1
+            }
+            data.push(item)
+        }
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: data, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
 }
 
 async function updateEnterprise(req, res) { 
     const {id, active} = req.body;
 
-    const data = true
+    let success = false;
+    let message = "Error en el servicio de empresas"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `UPDATE user SET active=${active?1:0}, update_state=${nowTime()} WHERE id_user=${id};`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) success = true
 
-    // connection.end();
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 
 }
 

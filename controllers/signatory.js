@@ -1,69 +1,112 @@
 const mysql = require('mysql');
-const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
-const moment = require("moment");
-const jwt = require("jwt-simple");
+const {MYSQL_CREDENTIALS} = require("../config");
 const { sqlAsync } = require('../utils/async');
+const { nowTime, getDateByNumber } = require('../utils/general-functions');
 
 async function addSignatory(req, res) {
+    const {name, last_name, email, role} = req.body;
+    let success = false;
+    let message = "Error en el servicio de evaluadores y firmantes"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    const {name, last_name, email} = req.body;
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `INSERT INTO user(role,name,lastname,email,photo,id_location,
+            description,background,birstdate,update_state,sign,active) 
+            values('${role}','${name}','${last_name}','${email}','',null,
+            '','',0,${nowTime()},'',1);`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
         
-    const result = true
+        if(resultType.affectedRows) success = true
 
-    res.status(200).send({result: result, success: true, message: ""});
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
 
-    // connection.end();
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 }
 async function updateSignatory(req, res) {
 
     const {id, active} = req.body;
+
+    let success = false;
+    let message = "Error en el servicio de empresas"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `UPDATE user SET active=${active?1:0}, update_state=${nowTime()} WHERE id_user=${id};`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
         
-    const result = true
+        if(resultType.affectedRows) success = true
 
-    res.status(200).send({result: result, success: true, message: ""});
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
 
-    // connection.end();
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 }
 async function getSignatories(req, res) {
+    const {value} = req.body;
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de empresas";
 
-    const {name} = req.body;
+    const data = []
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    try{
+        let sqlQuery = `SELECT * FROM user WHERE CONCAT(name, ' ', lastname) like '%${value}%' 
+        AND (role='SIGNATORY' OR role='EVALUATOR');`;
         
-    const data = [
-        {
-            id: '12',
-            name: 'Ernesto', 
-            last_name: 'Quiñores', 
-            email: 'e.quiñores@pucp.edu.pe',
-            role: "FIRMANTE",
-            update_date: "2023/09/09",
-            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-            active: true
-        },
-        {
-            id: '13',
-            name: 'Ernesto', 
-            last_name: 'Quiñores', 
-            email: 'e.quiñores@pucp.edu.pe',
-            role: "EVALUADOR",
-            update_date: "2023/09/09",
-            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-            active: false
-        },
-        {
-            id: '14',
-            name: 'Ernesto', 
-            last_name: 'Quiñores', 
-            role: "FIRMANTE",
-            email: 'e.quiñores@pucp.edu.pe',
-            update_date: "2023/09/09",
-            photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-            active: true
-        },
-    ]
+        const result = await sqlAsync(sqlQuery, connection);
 
-    res.status(200).send({result: data, success: true, message: ""});
-
-    // connection.end();
+        for(let it of result) {
+            
+            const item = {
+                id: `${it.id_user}`,
+                name: it.name,
+                last_name: it.lastname,
+                photo: it.photo,
+                email: it.email,
+                role: it.role,
+                update_date: getDateByNumber(it.update_state),
+                active: it.active==1
+            }
+            data.push(item)
+        }
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: data, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
 }
 
 

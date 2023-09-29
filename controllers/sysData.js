@@ -123,24 +123,66 @@ async function getSectors(req, res) {
 
 }
 async function getEmailsSystem(req, res) { 
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de empresas";
 
-    const data = {
-        support: "soporte@pucp.edu.pe",
-        domain: "pucp.edu.pe",
+    const data = []
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    try{
+        let sqlQuery = `SELECT * FROM sys_config WHERE active=1;`;
+        const result = await sqlAsync(sqlQuery, connection);
+
+        for(let it of result) {
+            data.push(it)
+        }
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
     }
-
-    res.status(200).send({result: data, success: true, message: ""});
-
-    // connection.end();
-
+    if(success) {
+        res.status(200).send({result: data, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
 }
 async function updateEmailsSystem(req, res) { 
     const {support,domain} = req.body;
-    const data = true
+    let success = false;
+    let message = "Error en el servicio de empresas"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sql1 = `UPDATE sys_config SET value='${support}' WHERE attr='support';`
+        sqlAsync(sql1, connection);
+        const sql2 = `UPDATE sys_config SET value='${domain}' WHERE attr='domain';`
+        sqlAsync(sql2, connection);
+        
+        success = true
 
-    // connection.end();
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 
 }
 async function setMyLenguage(req, res) { 
