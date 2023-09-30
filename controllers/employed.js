@@ -45,7 +45,7 @@ async function employedData(req, res) {
             index++
         }
 
-        sqlQuery = `SELECT * FROM agreement WHERE id_employed=${idUser} AND active=1;`
+        sqlQuery = `SELECT * FROM agreement WHERE id_employed=${idUser} AND active=1 AND hash<>'';`
         result =  await sqlAsync(sqlQuery, connection);
         for(let it of result) {
             const sqlj = `SELECT * FROM job WHERE id_job=${it.id_job};`

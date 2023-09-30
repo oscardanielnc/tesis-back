@@ -1,0 +1,8 @@
+docs
+agreements
+pantallas de carga
+
+
+//idicar cuando usuario esté inactivo
+//indicar cuando mi empresa esté inactiva
+//reglas de convenio vigente

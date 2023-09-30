@@ -66,7 +66,6 @@ async function getAgreements(req, res) {
         if(date_end && date_end!='') sqlQuery += ` AND J.job_end < ${getTimeDate(date_end)}`;
         
         const result = await sqlAsync(sqlQuery, connection);
-        console.log(result)
         for(let it of result) {
             const {value,name} = getState(it,iam)
             let agName = `${it.name} `
@@ -217,7 +216,6 @@ async function getAgreementState(req, res) {
                 }
                 item.list.push(ip)
             }
-            console.log(item)
             data = item
         }
         success = true
@@ -292,5 +290,6 @@ function getState(it,iam) {
 
 module.exports = {
     getAgreements,
-    getAgreementState
+    getAgreementState,
+    getState
 }

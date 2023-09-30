@@ -2,6 +2,7 @@ const mysql = require('mysql');
 const {MYSQL_CREDENTIALS} = require("../config");
 const { sqlAsync } = require('../utils/async');
 const { nowTime, getDateByNumber, matchBetween, getAttrById, getTimeDate } = require('../utils/general-functions');
+const { getState } = require('./agreement');
 
 async function studentData(req, res) { 
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
@@ -35,22 +36,25 @@ async function studentData(req, res) {
             user[keyName].push(item)
         }
 
-        sqlQuery = `SELECT * FROM agreement WHERE id_student=${idUser} AND active=1;`
+        sqlQuery = `SELECT A.id_agreement, U.name, J.title, J.id_job, U.photo, U.id_user, J.modality,
+        A.document_path, J.salary,J.job_start,J.job_end,U.id_location,A.observation_date_st, A.id_student,
+        A.observation_student, A.observation_ie, A.id_employed,A.id_enterprise,A.id_signatory,
+        A.observation_date_ie, A.date_student, A.date_enterprise, A.date_professor FROM agreement AS A
+        INNER JOIN job AS J ON A.id_job = J.id_job
+        INNER JOIN user AS U ON U.id_user = A.id_enterprise
+        WHERE A.id_student=${idUser};`
         result =  await sqlAsync(sqlQuery, connection);
         for(let it of result) {
-            const sqlj = `SELECT * FROM job WHERE id_job=${it.id_job};`
-            const j =  await sqlAsync(sqlj, connection);
-            const job = j[0];
-            const sqlu = `SELECT * FROM user WHERE id_user=${it.id_enterprise};`
-            const u =  await sqlAsync(sqlu, connection);
-            const us = u[0];
+            const {value,name} = getState(it,"STUDENT")
 
             const item = {
-                job_title: job.title,
-                enterprise_name: us.name,
-                id: it.id_agreement
+                job_title: it.title,
+                enterprise_name: it.name,
+                id: it.id_agreement,
+                state: name,
+                state_id: value,
             }
-            if(it.end_date > nowTime()) user.agreements.push(item)
+            user.agreements.push(item)
         }
 
         sqlQuery = `SELECT * FROM studentxjob WHERE id_student=${idUser} AND active=1 AND relation='P';`
