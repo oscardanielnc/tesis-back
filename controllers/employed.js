@@ -55,6 +55,7 @@ async function employedData(req, res) {
             const item = {
                 job_title: job.title,
                 id: it.id_agreement,
+                document_path: it.document_path,
                 date_sign: getDateByNumber(it.date_enterprise), 
             }
             user.agreements.push(item)

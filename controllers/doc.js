@@ -39,74 +39,51 @@ async function uploadCV(req,res) {
     connection.end();
 }
 
-// async function uploadDocs(req, res) {
-//     const code = req.params.code;
-//     const isStudent = Number(req.params.isStudent);
-//     const files = req.files;
+async function uploadAgreement(req,res) {
+    const {id, employed} = req.params;
+    const files = req.files;
 
-//     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
-//     connection.connect(err => {
-//         if (err) throw err;
-//     });
-    
-//     if(files && Object.keys(files).length !== 0) {
-//         try {
-//             for (const doc in files) {
-//                 const objDoc = files[doc];
-//                 const docPathName = objDoc.path.split("/")[2];
-//                 const docOriginalName = objDoc.originalFilename;
-//                 const horaSubida = new Date().getTime()
-//                 const sqlQuery = `INSERT INTO Documento(nombre, ruta, delAlumno, activo, codigo, horaSubida) 
-//                     VALUES('${docOriginalName}', '${docPathName}', ${isStudent}, 1, '${code}', ${horaSubida})`;
-//                 await sqlAsync(sqlQuery, connection)
-//             }
 
-//             res.status(200).send({
-//                 success: true,
-//                 message: "Archivos insertados correctamente!"
-//             })
-//         } catch(e){
-//             console.log("ERORRRR:", e)
-//             res.status(505).send({ 
-//                 success: false,
-//                 message: "Error en el servidor " + e.message
-//             })
-//         }
+    const sqlQueryType = `UPDATE agreement SET document_path='#####', id_employed=${employed}, 
+    observation_student='', observation_ie='', observation_date_st=0, observation_date_ie=0, 
+    date_student=0, date_enterprise=0, date_professor=0
+    WHERE id_agreement=${id};`
 
-//     } else {
-//         res.status(505).send({
-//             success: false,
-//             message: "No se han enviado archivos!"
-//         })
-//     }
-//     connection.end();
-// }
+    await uploadDoc(files, sqlQueryType, res)
 
-// function getAllDocs(req, res) {
-//     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
-//     const code = req.params.code;
-//     const isStudent = Number(req.params.isStudent);
-//     const sqlQuery = `SELECT * FROM Documento WHERE codigo='${code}' AND delAlumno=${isStudent} AND activo=1;`;
-//     connection.connect(err => {
-//         if (err) throw err;
-//     });
-//     connection.query(sqlQuery, (err, result) => {
-//         if (err) {
-//             console.log(err)
-//             res.status(505).send({
-//                 success: false,
-//                 message: "Error al tratar de acceder a la BD."
-//             })
-//         }
+}
+
+async function uploadDoc(files, sql, res) {
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    if(files && Object.keys(files).length !== 0) {
+        //files contine varios archivos. Solo quiero 1
+        const attr = `file0`
+        const objDoc = files[attr]
+        // const docPathName = objDoc.path.split("/")[2]; //linux
+        const docPathName = objDoc.path.split("\\")[2];
+
+        const resultType  = await sqlAsync(sql.replace('#####', docPathName), connection);
         
-//         res.status(200).send({
-//             success: true,
-//             result
-//         })
-//     });
+        if(resultType.affectedRows) {
+            res.status(200).send({
+                success: true,
+                result: docPathName,
+                message: "Archivos insertados correctamente!"
+            })
+        }
 
-//     connection.end();
-// }
+    } else {
+        res.status(505).send({
+            success: false,
+            message: "No se han enviado archivos!"
+        })
+    }
+    connection.end();
+}
 
 function getDoc(req, res) {
     const filePath = req.params.filePath;
@@ -149,9 +126,10 @@ function getDoc(req, res) {
 
 
 module.exports = {
-    // uploadDocs,
+    uploadAgreement,
     // getAllDocs,
     getDoc,
     // deleteDoc,
-    uploadCV
+    uploadCV,
+    uploadDoc
 }

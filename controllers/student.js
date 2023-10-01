@@ -220,11 +220,6 @@ async function contractStudent(req, res) {
         })
     }
     connection.end();
-    // const data = true
-
-    // res.status(200).send({result: data, success: true, message: ""});
-
-    // // connection.end();
 
 }
 

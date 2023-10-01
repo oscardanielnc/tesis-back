@@ -322,7 +322,6 @@ async function updateMyCertificate(req, res) {
     res.status(n).send({result: success, success, message});
 
     connection.end();
-
 }
 async function deleteMyCertificate(req, res) { 
     const {id} = req.body

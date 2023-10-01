@@ -235,6 +235,82 @@ async function getAgreementState(req, res) {
     connection.end();
 }
 
+async function signAgreement(req, res) { 
+    const {id_agreement,iam, myId} = req.body;
+    let success = false;
+    let message = "Error en el servicio de firmados"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        let mySign = ''
+        let dateSign = "date_student"
+        if(iam==='EMPLOYED') {
+            mySign = `id_employed=${myId}, `
+            dateSign = "date_enterprise"
+        }
+        else if(iam==='SIGNATORY') {
+            mySign = `id_signatory=${myId}, `
+            dateSign = "date_professor"
+        }
+
+        const sqlQueryType = `UPDATE agreement SET ${mySign} ${dateSign}=${nowTime()}
+        WHERE id_agreement=${id_agreement};`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) success = true
+
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
+}
+
+async function observationAgreement(req, res) { 
+    const {observation_ie, observation_student, role, id_agreement} = req.body;
+    let success = false;
+    let message = "Error en el servicio de firmados"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    try{
+        let mySign = 'observation_student'
+        let dateSign = "observation_date_st"
+        if(role==='SIGNATORY') {
+            mySign = `observation_ie`
+            dateSign = "observation_date_ie"
+        }
+
+        const sqlQueryType = `UPDATE agreement SET ${mySign}='${role==='SIGNATORY'? observation_ie: observation_student}', 
+        ${dateSign}=${nowTime()}
+        WHERE id_agreement=${id_agreement};`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) success = true
+
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
+}
+
 const agreementStatesType = [
     {
         value: '',
@@ -271,7 +347,7 @@ const agreementStatesType = [
 ]
 function getState(it,iam) {
     if(!it.document_path || it.document_path=='') return agreementStatesType[5]
-    if(it.observation_date_st==0 || it.observation_date_ie==0) return agreementStatesType[6]
+    if(it.observation_date_st!=0 || it.observation_date_ie!=0) return agreementStatesType[6]
 
     if(iam==="STUDENT" && (!it.date_student || it.date_student=='' || it.date_student==0)) return agreementStatesType[3]
     if(iam==="ENTERPRISE" && (!it.date_enterprise || it.date_enterprise=='' || it.date_enterprise==0)) return agreementStatesType[3]
@@ -291,5 +367,7 @@ function getState(it,iam) {
 module.exports = {
     getAgreements,
     getAgreementState,
-    getState
+    getState,
+    signAgreement,
+    observationAgreement
 }
