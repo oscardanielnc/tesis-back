@@ -38,7 +38,7 @@ async function studentData(req, res) {
 
         sqlQuery = `SELECT A.id_agreement, U.name, J.title, J.id_job, U.photo, U.id_user, J.modality,
         A.document_path, J.salary,J.job_start,J.job_end,U.id_location,A.observation_date_st, A.id_student,
-        A.observation_student, A.observation_ie, A.id_employed,A.id_enterprise,A.id_signatory,
+        A.observation_student, A.observation_ie, A.id_employed,A.id_enterprise,A.id_signatory, A.hash,
         A.observation_date_ie, A.date_student, A.date_enterprise, A.date_professor FROM agreement AS A
         INNER JOIN job AS J ON A.id_job = J.id_job
         INNER JOIN user AS U ON U.id_user = A.id_enterprise

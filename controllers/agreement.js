@@ -53,7 +53,7 @@ async function getAgreements(req, res) {
         //signatory
         else if(iam==='SIGNATORY') {
             sqlQuery = `SELECT A.id_agreement, U.name, U.lastname, J.title, J.id_job, U.photo, U.id_user, E.name AS enterprise_name,
-            A.document_path, J.salary,J.job_start,J.job_end,U.id_location,A.observation_date_st,
+            A.document_path, J.salary,J.job_start,J.job_end,U.id_location,A.observation_date_st, A.hash,
             A.observation_date_ie, A.date_student, A.date_enterprise, A.date_professor FROM agreement AS A
             INNER JOIN job AS J ON A.id_job = J.id_job
             INNER JOIN user AS U ON U.id_user = A.id_student
@@ -128,7 +128,7 @@ async function getAgreementState(req, res) {
 
         let sqlQuery = `SELECT A.id_agreement, U.name, J.title, J.id_job, U.photo, U.id_user, J.modality,
             A.document_path, J.salary,J.job_start,J.job_end,U.id_location,A.observation_date_st, A.id_student,
-            A.observation_student, A.observation_ie, A.id_employed,A.id_enterprise,A.id_signatory,
+            A.observation_student, A.observation_ie, A.id_employed,A.id_enterprise,A.id_signatory, A.hash,
             A.observation_date_ie, A.date_student, A.date_enterprise, A.date_professor FROM agreement AS A
             INNER JOIN job AS J ON A.id_job = J.id_job
             INNER JOIN user AS U ON U.id_user = A.id_enterprise
@@ -236,7 +236,7 @@ async function getAgreementState(req, res) {
 }
 
 async function signAgreement(req, res) { 
-    const {id_agreement,iam, myId} = req.body;
+    const {id_agreement,iam, myId, completed} = req.body;
     let success = false;
     let message = "Error en el servicio de firmados"
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
@@ -255,8 +255,12 @@ async function signAgreement(req, res) {
             mySign = `id_signatory=${myId}, `
             dateSign = "date_professor"
         }
+        let hash = ''
+        if(completed) {
+            hash = `hash='hash', `
+        }
 
-        const sqlQueryType = `UPDATE agreement SET ${mySign} ${dateSign}=${nowTime()}
+        const sqlQueryType = `UPDATE agreement SET ${mySign} ${hash} ${dateSign}=${nowTime()}
         WHERE id_agreement=${id_agreement};`
         const resultType  = await sqlAsync(sqlQueryType, connection);
         
@@ -347,7 +351,7 @@ const agreementStatesType = [
 ]
 function getState(it,iam) {
     if(!it.document_path || it.document_path=='') return agreementStatesType[5]
-    if(it.observation_date_st!=0 || it.observation_date_ie!=0) return agreementStatesType[6]
+    if((it.observation_date_st!=0 || it.observation_date_ie!=0) && (!it.hash || it.hash=='')) return agreementStatesType[6]
 
     if(iam==="STUDENT" && (!it.date_student || it.date_student=='' || it.date_student==0)) return agreementStatesType[3]
     if(iam==="ENTERPRISE" && (!it.date_enterprise || it.date_enterprise=='' || it.date_enterprise==0)) return agreementStatesType[3]

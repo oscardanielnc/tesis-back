@@ -32,6 +32,7 @@ async function signIn(req, res) {
                 error=us.error
             } else arrUsers.push(us.user)
         }
+        result = true;
 
     } catch (e) {
         console.log(e)
@@ -395,6 +396,10 @@ async function getUser(resultLUser, connection,photo) {
     
                     if(resultu.length>0) {
                         const emp = resultu[0]
+
+                        if(emp.active==0) {
+                            return {result: false, error: "Empresa inactiva", user: null}
+                        }
         
                         user = {
                             ...user,
