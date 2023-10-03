@@ -2,6 +2,8 @@ const mysql = require('mysql');
 const {MYSQL_CREDENTIALS} = require("../config");;
 const { sqlAsync } = require('../utils/async');
 const { getDateByNumber, nowTime } = require('../utils/general-functions');
+const { MAIN_PAGE, mailFormater } = require('../utils/const');
+const { sendEmail } = require('../utils/sendEmail');
 
 async function employedData(req, res) { 
     const {idUser,enterprise_id} = req.params;
@@ -145,7 +147,18 @@ async function changePrivToEmployed(req, res) {
         if (result.affectedRows) {
             let sql = `UPDATE user SET update_state=${nowTime()} WHERE id_user=${user_id}`;
             const r =  await sqlAsync(sql, connection);
-            if (r.affectedRows) success = true
+
+            if (r.affectedRows) {
+                success = true
+                let sqlmail = `SELECT * FROM user WHERE id_user=${user_id}`
+                const resultMail =  await sqlAsync(sqlmail, connection);
+                const employed = resultMail[0]
+                const subject = `Actualización de privilegios`
+                const arr = [`A nombre de su empresa le informamos que se han actualizado sus privilegios en la plataforma.`,
+                            `Puede consultar dichos privilegios ingresando a ${MAIN_PAGE}.`]
+                const text = mailFormater(`${employed.name} ${employed.lastname}`,arr)
+                await sendEmail(employed.email, subject, text)
+            }
         }
     } catch(e){
         console.log(e)

@@ -1,10 +1,10 @@
 const mysql = require('mysql');
-const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
-const moment = require("moment");
-const jwt = require("jwt-simple");
+const {MYSQL_CREDENTIALS} = require("../config");
 const { sqlAsync } = require('../utils/async');
 const { getAttrById, getDateByNumber, nowTime, getTimeDate } = require('../utils/general-functions');
 const { getScore } = require('./enterprise');
+const { MAIN_PAGE, mailFormater } = require('../utils/const');
+const { sendEmail } = require('../utils/sendEmail');
 
 async function getAgreements(req, res) { 
     const {job,enterprise,student,employed,location,modality,iam,
@@ -29,7 +29,7 @@ async function getAgreements(req, res) {
         //enterprise
         if(iam==='ENTERPRISE') {
             sqlQuery = `SELECT A.id_agreement, U.name, U.lastname, J.title, J.id_job, U.photo, U.id_user, 
-            A.document_path, J.salary,J.job_start,J.job_end,U.id_location,A.observation_date_st,
+            A.document_path, J.salary,J.job_start,J.job_end,U.id_location,A.observation_date_st,A.hash,
             A.observation_date_ie, A.date_student, A.date_enterprise, A.date_professor FROM agreement AS A
             INNER JOIN job AS J ON A.id_job = J.id_job
             INNER JOIN user AS U ON U.id_user = A.id_student
@@ -41,7 +41,7 @@ async function getAgreements(req, res) {
         //student
         else if(iam==='STUDENT') {
             sqlQuery = `SELECT A.id_agreement, U.name, J.title, J.id_job, U.photo, U.id_user, 
-            A.document_path, J.salary,J.job_start,J.job_end,U.id_location,A.observation_date_st,
+            A.document_path, J.salary,J.job_start,J.job_end,U.id_location,A.observation_date_st,A.hash,
             A.observation_date_ie, A.date_student, A.date_enterprise, A.date_professor FROM agreement AS A
             INNER JOIN job AS J ON A.id_job = J.id_job
             INNER JOIN user AS U ON U.id_user = A.id_enterprise
@@ -245,6 +245,7 @@ async function signAgreement(req, res) {
         if (err) throw err;
     });
     try{
+
         let mySign = ''
         let dateSign = "date_student"
         if(iam==='EMPLOYED') {
@@ -258,6 +259,17 @@ async function signAgreement(req, res) {
         let hash = ''
         if(completed) {
             hash = `hash='hash', `
+            const sqlAg = `SELECT * FROM agreement WHERE id_agreement=${id_agreement};`;
+            const resAg = await sqlAsync(sqlAg, connection);
+            const agree = resAg[0]
+            const sqlStu = `SELECT * FROM user WHERE id_user=${agree.id_student};`;
+            const resStu = await sqlAsync(sqlStu, connection);
+            const student = resStu[0]
+            const subject = `Convenio firmado para el puesto de ${agree.name}`
+            const arr = [`Le informamos que su convenio de prácticas para el puesto de ${agree.name} ya cuenta con todas las firmas correspondientes.`,
+                        `Puede ver el estado de su convenio ingresando a ${MAIN_PAGE}.`]
+            const text = mailFormater(`${student.name} ${student.lastname}`,arr)
+            await sendEmail(student.email, subject, text)
         }
 
         const sqlQueryType = `UPDATE agreement SET ${mySign} ${hash} ${dateSign}=${nowTime()}
@@ -289,6 +301,18 @@ async function observationAgreement(req, res) {
     });
 
     try{
+        const sqlAg = `SELECT * FROM agreement WHERE id_agreement=${id_agreement};`;
+        const resAg = await sqlAsync(sqlAg, connection);
+        const agree = resAg[0]
+        const sqlStu = `SELECT * FROM user WHERE id_user=${agree.id_employed};`;
+        const resStu = await sqlAsync(sqlStu, connection);
+        const student = resStu[0]
+        const subject = `Observaciones en el convenio de ${agree.name}`
+        const arr = [`Le informamos que se han registrado observaciones en el convenio de prácticas para el puesto de ${agree.name} que usted a cargado. Por favor corregirlas.`,
+                    `Puede ver las observaciones y el estado de su convenio ingresando a ${MAIN_PAGE}.`]
+        const text = mailFormater(`${student.name} ${student.lastname}`,arr)
+        await sendEmail(student.email, subject, text)
+
         let mySign = 'observation_student'
         let dateSign = "observation_date_st"
         if(role==='SIGNATORY') {

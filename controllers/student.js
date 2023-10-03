@@ -3,6 +3,8 @@ const {MYSQL_CREDENTIALS} = require("../config");
 const { sqlAsync } = require('../utils/async');
 const { nowTime, getDateByNumber, matchBetween, getAttrById, getTimeDate } = require('../utils/general-functions');
 const { getState } = require('./agreement');
+const { sendEmail } = require('../utils/sendEmail');
+const { MAIN_PAGE, mailFormater } = require('../utils/const');
 
 async function studentData(req, res) { 
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
@@ -204,7 +206,24 @@ async function contractStudent(req, res) {
             sqlQuery = `UPDATE studentxjob SET relation='C' WHERE id_student=${id_student} AND id_job=${code} AND active=1`;
             let r =  await sqlAsync(sqlQuery, connection);
 
-            if (r.affectedRows) success = true
+            if (r.affectedRows) {
+                success = true
+                let sqlmail = `SELECT * FROM user WHERE id_user=${id_student}`
+                const resultMail =  await sqlAsync(sqlmail, connection);
+                let sqljob = `SELECT * FROM job WHERE id_job=${code}`
+                const resultJob =  await sqlAsync(sqljob, connection);
+                let sqlent = `SELECT * FROM user WHERE id_user=${id_enterprise}`
+                const resultEnt =  await sqlAsync(sqlent, connection);
+                const student = resultMail[0]
+                const job = resultJob[0]
+                const enterprise = resultEnt[0]
+                const subject = `Contrato ${job.title}`
+                const arr = [`A nombre de empresa ${enterprise.name} le informamos que usted ha sido contratado(a) en el puesto de ${job.title}.`,
+                            `Puede ver los detalles del puesto de trabajo y el estado de su convenio ingresando a ${MAIN_PAGE}.`]
+                const text = mailFormater(`${student.name} ${student.lastname}`,arr)
+                await sendEmail(student.email, subject, text)
+
+            }
         }
     } catch(e){
         console.log(e)
