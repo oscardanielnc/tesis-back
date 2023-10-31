@@ -3,7 +3,7 @@ const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
 const moment = require("moment");
 const jwt = require("jwt-simple");
 const { sqlAsync } = require('../utils/async');
-const { nowTime, getDateByNumber } = require('../utils/general-functions');
+const { nowTime, getDateByNumber, getAttrById } = require('../utils/general-functions');
 
 async function enterpriseData(req, res) { 
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
@@ -54,6 +54,7 @@ async function enterpriseData(req, res) {
                 student: it.student,
                 student_id: `${it.id_creator}`,
                 id_enterprise: `${idUser}`,
+                state: it.verification_state
             }
             user.opinions.push(item)
             index++
@@ -116,6 +117,34 @@ async function enterpriseExist(req, res) {
     connection.end();
 
 }
+async function getAlredySigned(req, res) { 
+    const {idEnterprise, idUser} = req.params;
+
+    let result = false
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        let sqlQuery = `SELECT * FROM opinion WHERE id_creator=${idUser} AND id_enterprise=${idEnterprise} AND active=1;`;
+        const resultq =  await sqlAsync(sqlQuery, connection);
+        let sqlQuery2 = `SELECT * FROM studentxjob WHERE id_student=${idUser} AND id_enterprise=${idEnterprise} AND active=1 AND relation='C';`;
+        const resultq2 =  await sqlAsync(sqlQuery2, connection);
+
+        result = resultq.length===0 && resultq2.length>0
+    } catch(e){
+        console.log(e)
+        res.status(505).send({ 
+            message: e.message,
+            success: false
+        })
+    }
+    
+    res.status(200).send({result: result, success: true, message: ""});
+    connection.end();
+
+}
 async function getEnterprises(req, res) { 
     const {value} = req.body;
 
@@ -165,7 +194,6 @@ async function getEnterprises(req, res) {
     }
     connection.end();
 }
-
 async function updateEnterprise(req, res) { 
     const {id, active} = req.body;
 
@@ -194,7 +222,6 @@ async function updateEnterprise(req, res) {
     connection.end();
 
 }
-
 async function getScore(id_enterprise,connection) {
     // const sqlQueryOp = `SELECT * FROM opinion WHERE id_enterprise=${id_enterprise};`
     // const resultOp  = await sqlAsync(sqlQueryOp, connection);
@@ -204,12 +231,145 @@ async function getScore(id_enterprise,connection) {
         num_opinios: 0
     }
 }
+async function getEnterpriseOpinion(req, res) { 
+    const {id} = req.params;
 
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de empresas";
+
+    let data = null
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    try{
+        const sqlSpe = `SELECT * FROM location;`;
+        const arrLocations = await sqlAsync(sqlSpe, connection);
+        const sqlsec = `SELECT * FROM sector;`;
+        const arrSectors = await sqlAsync(sqlsec, connection);
+    
+        let sqlQuery = `SELECT U.name, U.photo, U.id_user, E.ruc, U.id_location, E.num_employees, E.id_sector
+            FROM enterprise AS E
+            INNER JOIN user AS U ON U.id_user = E.id_user
+            WHERE U.id_user=${id};`;
+        
+        const result = await sqlAsync(sqlQuery, connection);
+        
+        if(result.length > 0) {
+            const it = result[0]
+            const {score,num_opinios} = await getScore(it.id_user,connection);
+            data = {
+                enterprise_name: it.name,
+                enterprise_score: score,
+                enterprise_photo: it.photo,
+                enterprise_sector: getAttrById(arrSectors,'id_sector',it.id_location, 'name'),
+                enterprise_location: getAttrById(arrLocations,'id_location',it.id_sector, 'name'),
+                num_employees: it.num_employees,
+                enterprise_id: `${it.id_user}`,
+                ruc: it.ruc,
+                num_opinios
+            }
+        }
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: data, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
+}
+
+async function getEnterprisesOpinions(req, res) { 
+    const {name, sector, location, orderBy} = req.body;
+
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de empresas";
+
+    let data = []
+    let preData = []
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    try{
+        const sqlSpe = `SELECT * FROM location;`;
+        const arrLocations = await sqlAsync(sqlSpe, connection);
+        const sqlsec = `SELECT * FROM sector;`;
+        const arrSectors = await sqlAsync(sqlsec, connection);
+    
+        let sqlQuery = `SELECT U.name, U.photo, U.id_user, E.ruc, U.id_location, E.num_employees, E.id_sector
+            FROM enterprise AS E
+            INNER JOIN user AS U ON U.id_user = E.id_user
+            WHERE U.name like '%${name}%' `;
+        if(sector && sector!='') sqlQuery += ` AND E.id_sector=${sector} `;
+        if(location && location!='') sqlQuery += ` AND U.id_location=${location};`;
+        
+        const result = await sqlAsync(sqlQuery, connection);
+        
+        for(let it of result) {
+            const {score,num_opinios} = await getScore(it.id_user,connection);
+            const item = {
+                enterprise_name: it.name,
+                enterprise_score: score,
+                enterprise_photo: it.photo,
+                enterprise_sector: getAttrById(arrSectors,'id_sector',it.id_location, 'name'),
+                enterprise_location: getAttrById(arrLocations,'id_location',it.id_sector, 'name'),
+                num_employees: it.num_employees,
+                enterprise_id: `${it.id_user}`,
+                ruc: it.ruc,
+                num_opinios
+            }
+            preData.push(item)
+        }
+        data = orderArrEops(preData, orderBy)
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: data, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
+}
+
+function orderArrEops(preData, orderBy) {
+    if(!orderBy || orderBy=='') return preData;
+    const attr = orderBy==='vp'? 'enterprise_score': 'num_opinios'
+
+    preData.sort(function(a,b) {
+        const v1 = a[attr]
+        const v2 = b[attr]
+        return v2 - v1
+    })
+    return preData
+}
 
 module.exports = {
     enterpriseData,
     enterpriseExist,
     getEnterprises,
     updateEnterprise,
-    getScore
+    getScore,
+    getEnterpriseOpinion,
+    getEnterprisesOpinions,
+    getAlredySigned
 }

@@ -172,7 +172,7 @@ async function getJobByCode(req, res) {
 
 }
 async function applyJob(req, res) { 
-    const {idUser, code} = req.body;
+    const {idUser, code, id_enterprise} = req.body;
 
     let success = false;
     let message = "Error en el servicio de trabajos"
@@ -182,8 +182,8 @@ async function applyJob(req, res) {
         if (err) throw err;
     });
     try{
-        const sqlQueryType = `INSERT INTO studentxjob(id_student,id_job,relation,active) 
-            values(${idUser},${code},'P',1);`
+        const sqlQueryType = `INSERT INTO studentxjob(id_student,id_job,relation,id_enterprise,active) 
+            values(${idUser},${code},'P',${id_enterprise},1);`
         const resultType  = await sqlAsync(sqlQueryType, connection);
         
         if(resultType.affectedRows) success = true

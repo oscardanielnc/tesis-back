@@ -1,5 +1,5 @@
 const mysql = require('mysql');
-const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
+const {MYSQL_CREDENTIALS} = require("../config");
 const { sqlAsync } = require('../utils/async');
 const { getDateByNumber } = require('../utils/general-functions');
 
@@ -24,7 +24,7 @@ async function getSpecialties(req, res) {
                 professors: []
             }
             if(admin) {
-                let sqlQuery = `SELECT U.id_user, U.name, U.lastname, P.coordinator, U.update_state, U.photo, U.active
+                let sqlQuery = `SELECT U.id_user, U.name, U.lastname, P.coordinator, U.update_state, U.photo, U.active, P.id_specialty
                     FROM user AS U INNER JOIN professor AS P on U.id_user = P.id_user WHERE P.id_specialty = ${spe.id_specialty};`;
                 const resultP =  await sqlAsync(sqlQuery, connection);
     
@@ -35,6 +35,7 @@ async function getSpecialties(req, res) {
                         last_name: p.lastname, 
                         coordinator: p.coordinator==1,
                         update_date: getDateByNumber(p.update_state),
+                        id_specialty: p.id_specialty,
                         photo: p.photo,
                         active: p.active==1
                     }
@@ -50,79 +51,6 @@ async function getSpecialties(req, res) {
             success: false
         })
     }
-
-    // const data = [
-    //     {
-    //         value: '1',
-    //         name: 'Ingeniería informática',
-    //         cycles: 10,
-    //         active: true,
-    //         professors: [ //solo si admin true
-    //             {
-    //                 id: '12',
-    //                 name: 'Ernesto', 
-    //                 last_name: 'Quiñores', 
-    //                 coordinator: true,
-    //                 update_date: "2023/09/09",
-    //                 photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-    //                 active: true
-    //             },
-    //             {
-    //                 id: '13',
-    //                 name: 'Ernesto', 
-    //                 last_name: 'Quiñores', 
-    //                 coordinator: false,
-    //                 update_date: "2023/09/09",
-    //                 photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-    //                 active: false
-    //             },
-    //             {
-    //                 id: '14',
-    //                 name: 'Ernesto', 
-    //                 last_name: 'Quiñores', 
-    //                 coordinator: false,
-    //                 update_date: "2023/09/09",
-    //                 photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-    //                 active: true
-    //             },
-    //         ]
-    //     },
-    //     {
-    //         value: '2',
-    //         name: 'Derecho',
-    //         cycles: 12,
-    //         active: true,
-    //         professors: [
-    //             {
-    //                 id: '12',
-    //                 name: 'Ernesto', 
-    //                 last_name: 'Quiñores', 
-    //                 coordinador: true,
-    //                 update_date: "2023/09/09",
-    //                 photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-    //                 active: true
-    //             },
-    //             {
-    //                 id: '13',
-    //                 name: 'Ernesto', 
-    //                 last_name: 'Quiñores', 
-    //                 coordinador: false,
-    //                 update_date: "2023/09/09",
-    //                 photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-    //                 active: true
-    //             },
-    //             {
-    //                 id: '14',
-    //                 name: 'Ernesto', 
-    //                 last_name: 'Quiñores', 
-    //                 coordinador: false,
-    //                 update_date: "2023/09/09",
-    //                 photo: 'https://lh3.googleusercontent.com/a/AAcHTtcLAoj-9rKUOQ-m3z4iMUv_xdTZOEUcy2AApme_jh6f00Q=s96-c',
-    //                 active: true
-    //             },
-    //         ]
-    //     },
-    // ]
 
     res.status(200).send({result: data, success: true, message: ""});
     connection.end();

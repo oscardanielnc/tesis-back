@@ -1,9 +1,7 @@
 const mysql = require('mysql');
-const {MYSQL_CREDENTIALS, PANDA_KEY} = require("../config");
-const moment = require("moment");
-const jwt = require("jwt-simple");
+const {MYSQL_CREDENTIALS} = require("../config");
 const { sqlAsync } = require('../utils/async');
-const { getTimeDate } = require('../utils/general-functions');
+const { getTimeDate, getDate2ByNumber } = require('../utils/general-functions');
 
 async function getLocations(req, res) {
     const {name} = req.body;
@@ -418,35 +416,72 @@ async function maintenanceSysData(req, res) {
 
 async function createPeriod(req, res) { 
     const {id, registration_start, cycle_init, cycle_end} = req.body;
-    // Actualizar la relacion de un lenguaje existente con un perfil
-    const data = true
+    
+    let success = false;
+    let message = "Error en el servicio de periodos"
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
 
-    res.status(200).send({result: data, success: true, message: ""});
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `INSERT INTO period(id_period,registration_start,cycle_init,cycle_end,active) 
+            values(${id},${registration_start},${cycle_init},${cycle_end},1);`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) success = true
 
-    // connection.end();
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+
+    const n = success? 200: 500;
+    res.status(n).send({result: success, success, message});
+
+    connection.end();
 
 }
 async function getPeriods(req, res) { 
-    // Actualizar la relacion de un lenguaje existente con un perfil
-    const data = [
-        {
-            id: 20232, 
-            registration_start: "2023/09/21",
-            cycle_init: "2023/09/21", 
-            cycle_end: "2023/09/21",
-        },
-        {
-            id: 20231, 
-            registration_start: "2023/09/21",
-            cycle_init: "2023/09/21", 
-            cycle_end: "2023/09/21",
-        },
-    ]
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de periodos";
 
-    res.status(200).send({result: data, success: true, message: ""});
+    const data = []
 
-    // connection.end();
+    connection.connect(err => {
+        if (err) throw err;
+    });
 
+    try{
+        let sqlQuery = `SELECT * FROM period WHERE active=1;`;
+        const result = await sqlAsync(sqlQuery, connection);
+
+        for(let it of result) {
+            const item = {
+                id: it.id_period, 
+                registration_start: getDate2ByNumber(it.registration_start),
+                cycle_init: getDate2ByNumber(it.cycle_init), 
+                cycle_end: getDate2ByNumber(it.cycle_end),
+            }
+            data.push(item)
+        }
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: data, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
 }
 
 

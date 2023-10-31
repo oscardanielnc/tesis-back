@@ -42,6 +42,12 @@ function getDateByNumber(num) {
     const arr = d.toLocaleDateString().split('/')
     return `${cifNum(Number(arr[2]))}-${cifNum(Number(arr[1]))}-${cifNum(Number(arr[0]))}`
 }
+function getDate2ByNumber(num) {
+    if(num==0) return '' 
+    const d = new Date(num)
+    const arr = d.toLocaleDateString().split('/')
+    return `${cifNum(Number(arr[0]))}/${cifNum(Number(arr[1]))}/${cifNum(Number(arr[2]))}`
+}
 function cifNum(num) {
     if(num<10) return `0${num}`;
     return `${num}`
@@ -52,6 +58,7 @@ module.exports = {
     getTimeDate,
     nowTime,
     getDateByNumber,
+    getDate2ByNumber,
     matchBetween,
     getAttrById
 }

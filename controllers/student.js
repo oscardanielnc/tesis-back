@@ -196,10 +196,10 @@ async function contractStudent(req, res) {
     try{
         let sqlQuery = `INSERT INTO agreement(name,document_path,id_job,id_student,id_enterprise,id_employed,id_signatory,
             hash,date_student,date_enterprise,date_professor,init_date,end_date,observation_student,observation_ie,
-            observation_date_st,observation_date_ie,active) 
+            observation_date_st,observation_date_ie,sign_student,sign_enterprise,sign_professor,active) 
         values('${name}','',${code},${id_student},${id_enterprise},null,null,
         '',0,0,0,${getTimeDate(init_date)},${getTimeDate(end_date)},'','',
-        0,0,1);`;
+        0,0,'','','',1);`;
         let result =  await sqlAsync(sqlQuery, connection);
 
         if (result.affectedRows) {

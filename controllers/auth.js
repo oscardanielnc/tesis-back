@@ -71,9 +71,9 @@ async function signUp(req, res) {
         const ddate = getTimeDate(date)
 
         const sqlQueryUser = `INSERT INTO user(role,name,lastname,email,photo,id_location,
-            description,background,birstdate,update_state,sign,active) 
+            description,background,birstdate,update_state,active) 
             values('${role}','${name}','${lastname}','${email}','${photo}',${location},
-            '','',${ddate},${bdate},'',1);`
+            '','',${ddate},${bdate},1);`
         const resultUser  = await sqlAsync(sqlQueryUser, connection);
         const idUser = resultUser.insertId;
 
@@ -319,6 +319,7 @@ async function getUser(resultLUser, connection,photo) {
                 description: resultLUser.description,
                 date: resultLUser.birstdate,
                 active: resultLUser.active==1,
+                // sign: resultLUser.sign,
                 photo: photo&&photo!=''? photo: resultLUser.photo
             }
     

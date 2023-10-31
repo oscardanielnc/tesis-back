@@ -1,10 +1,11 @@
 const mysql = require('mysql');
 const {MYSQL_CREDENTIALS} = require("../config");
 const { sqlAsync } = require('../utils/async');
-const { getAttrById, getDateByNumber, nowTime, getTimeDate } = require('../utils/general-functions');
+const { getAttrById, getDateByNumber, nowTime, getTimeDate, getDate2ByNumber } = require('../utils/general-functions');
 const { getScore } = require('./enterprise');
 const { MAIN_PAGE, mailFormater } = require('../utils/const');
 const { sendEmail } = require('../utils/sendEmail');
+const { mergePDFs } = require('./sign_function');
 
 async function getAgreements(req, res) { 
     const {job,enterprise,student,employed,location,modality,iam,
@@ -66,6 +67,7 @@ async function getAgreements(req, res) {
         if(date_end && date_end!='') sqlQuery += ` AND J.job_end < ${getTimeDate(date_end)}`;
         
         const result = await sqlAsync(sqlQuery, connection);
+        console.log(result)
         for(let it of result) {
             const {value,name} = getState(it,iam)
             let agName = `${it.name} `
@@ -181,7 +183,8 @@ async function getAgreementState(req, res) {
                     photo: student.photo,
                     name: `${student.name} ${student.lastname}`,
                     role: 'STUDENT',
-                    date: getDateByNumber(it.date_student),
+                    date: getDate2ByNumber(it.date_student), 
+                    // sign: student.sign,
                     attr: "Estudiante",
                 }
                 item.list.push(ip)
@@ -196,7 +199,8 @@ async function getAgreementState(req, res) {
                     photo: employed.photo,
                     name: `${employed.name} ${employed.lastname}`,
                     role: 'EMPLOYED',
-                    date: getDateByNumber(it.date_enterprise),
+                    date: getDate2ByNumber(it.date_enterprise),
+                    // sign: employed.sign,
                     attr: "Empresa",
                 }
                 item.list.push(ip)
@@ -211,7 +215,8 @@ async function getAgreementState(req, res) {
                     photo: signatory.photo,
                     name: `${signatory.name} ${signatory.lastname}`,
                     role: 'SIGNATORY',
-                    date: getDateByNumber(it.date_professor),
+                    date: getDate2ByNumber(it.date_professor),
+                    // sign: signatory.sign,
                     attr: "Institución Educativa",
                 }
                 item.list.push(ip)
@@ -236,7 +241,7 @@ async function getAgreementState(req, res) {
 }
 
 async function signAgreement(req, res) { 
-    const {id_agreement,iam, myId, completed} = req.body;
+    const {id_agreement,iam, myId, completed, sign, data} = req.body;
     let success = false;
     let message = "Error en el servicio de firmados"
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
@@ -245,23 +250,45 @@ async function signAgreement(req, res) {
         if (err) throw err;
     });
     try{
+        // const sqlSign = `UPDATE user SET sign='${sign}' WHERE id_user=${myId};`
+        // await sqlAsync(sqlSign, connection);
 
         let mySign = ''
         let dateSign = "date_student"
+        let signExecute = 'sign_student'
         if(iam==='EMPLOYED') {
             mySign = `id_employed=${myId}, `
             dateSign = "date_enterprise"
+            signExecute = "sign_enterprise"
         }
         else if(iam==='SIGNATORY') {
             mySign = `id_signatory=${myId}, `
             dateSign = "date_professor"
+            signExecute = "sign_professor"
         }
+        let updateAllSigns = `${signExecute}='${sign}', `
+        
         let hash = ''
+        let newDocname = ''
         if(completed) {
             hash = `hash='hash', `
+            updateAllSigns = `sign_student='', sign_enterprise='', sign_professor='', `
             const sqlAg = `SELECT * FROM agreement WHERE id_agreement=${id_agreement};`;
             const resAg = await sqlAsync(sqlAg, connection);
             const agree = resAg[0]
+
+            const finaldatasign = getFinalDataSign(data, agree, iam, sign)
+            const pathDoc = agree.document_path
+            newDocname = `document_path='sd_${pathDoc}', `
+
+            mergePDFs(finaldatasign, pathDoc).then(() => {
+                console.log('Archivos PDF unidos con éxito.');
+            }).catch(error => {
+                success = false
+                message = error.message
+                console.error('Error al unir los archivos PDF:', error);
+            });
+
             const sqlStu = `SELECT * FROM user WHERE id_user=${agree.id_student};`;
             const resStu = await sqlAsync(sqlStu, connection);
             const student = resStu[0]
@@ -272,7 +299,7 @@ async function signAgreement(req, res) {
             await sendEmail(student.email, subject, text)
         }
 
-        const sqlQueryType = `UPDATE agreement SET ${mySign} ${hash} ${dateSign}=${nowTime()}
+        const sqlQueryType = `UPDATE agreement SET ${updateAllSigns} ${mySign} ${hash} ${newDocname} ${dateSign}=${nowTime()}
         WHERE id_agreement=${id_agreement};`
         const resultType  = await sqlAsync(sqlQueryType, connection);
         
@@ -288,6 +315,30 @@ async function signAgreement(req, res) {
     res.status(n).send({result: success, success, message});
 
     connection.end();
+}
+
+function getFinalDataSign(data, agree, iam, sign) {
+    const nList = []
+    for(let item of data.list) {
+        let iamSign = 'sign_student'
+        if(item.role === "EMPLOYED") iamSign = 'sign_enterprise'
+        else if(item.role === "SIGNATORY") iamSign = 'sign_professor'
+
+        const s = iam===item.role? sign: agree[iamSign]
+
+        const nItem = {
+            ...item, 
+            sign: s
+        }
+
+        nList.push(nItem)
+    }
+
+    const res = {
+        ...data,
+        list: nList
+    }
+    return res;
 }
 
 async function observationAgreement(req, res) { 

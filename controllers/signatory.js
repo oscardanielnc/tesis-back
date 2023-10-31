@@ -14,9 +14,9 @@ async function addSignatory(req, res) {
     });
     try{
         const sqlQueryType = `INSERT INTO user(role,name,lastname,email,photo,id_location,
-            description,background,birstdate,update_state,sign,active) 
+            description,background,birstdate,update_state,active) 
             values('${role}','${name}','${last_name}','${email}','',null,
-            '','',0,${nowTime()},'',1);`
+            '','',0,${nowTime()},1);`
         const resultType  = await sqlAsync(sqlQueryType, connection);
         
         if(resultType.affectedRows) success = true
