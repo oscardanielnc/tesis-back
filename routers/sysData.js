@@ -16,6 +16,6 @@ api.delete("/sys-data/my-language", SysDataController.deleteMyLenguage);
 api.delete("/sys-data/my-certificate", SysDataController.deleteMyCertificate);
 api.post("/sys-data/maintenance", SysDataController.maintenanceSysData);
 api.post("/sys-data/period", SysDataController.createPeriod);
-api.get("/sys-data/periods", SysDataController.getPeriods);
+api.get("/sys-data/periods/:idStudent", SysDataController.getPeriods);
 
 module.exports = api;

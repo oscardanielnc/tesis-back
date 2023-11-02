@@ -194,6 +194,113 @@ async function getEnterprises(req, res) {
     }
     connection.end();
 }
+
+async function getEnterprisesBL(req, res) { 
+    const {name,state} = req.body;
+
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de empresas";
+
+    const data = []
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    try{
+        let sqlQuery = `SELECT U.name, U.photo, U.id_user, E.ruc, E.blacklisted_state
+            FROM enterprise AS E
+            INNER JOIN user AS U ON U.id_user = E.id_user
+            WHERE (U.name like '%${name}%' OR E.ruc like '%${name}%') AND U.active=1 AND E.blacklisted_state like '%${state}%';`;
+        
+        const result = await sqlAsync(sqlQuery, connection);
+
+        for(let it of result) {
+            const {score,num_opinios} = await getScore(it.id_user,connection);
+            const item = {
+                id: `${it.id_user}`,
+                name: it.name,
+                photo: it.photo,
+                ruc: it.ruc,
+                state: it.blacklisted_state,
+                score,
+                num_opinios
+            }
+            data.push(item)
+        }
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: data, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
+}
+
+async function getEnterpriseBlackList(req, res) { 
+    const {id} = req.params;
+
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let success = false
+    let message = "Error en el servicio de empresas";
+
+    let data = {}
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    try{
+        let sqlQuery = `SELECT U.name, U.photo, U.id_user, E.ruc, E.blacklisted_state
+            FROM enterprise AS E
+            INNER JOIN user AS U ON U.id_user = E.id_user
+            WHERE U.id_user = ${id}`;
+        
+        const result = await sqlAsync(sqlQuery, connection);
+        const enterp = result[0]
+        const {score,num_opinios} = await getScore(enterp.id_user,connection);
+
+        const enterprise = {
+            id: enterp.id_user,
+            photo: enterp.photo,
+            name: enterp.name,
+            state: enterp.blacklisted_state,
+            score,
+            num_opinios
+        }
+
+        sqlQuery = `SELECT * FROM blacklist_msg WHERE id_enterprise = ${id} AND active=1 ORDER BY id_blacklist_msg DESC`;
+        const comments = await sqlAsync(sqlQuery, connection);
+        data = {
+            enterprise,
+            comments
+        }
+
+        success = true
+    } catch(e){
+        console.log(e)
+        success = false
+        message = e.message
+    }
+    if(success) {
+        res.status(200).send({result: data, success, message});
+    } else {
+        res.status(505).send({ 
+            message,
+            success
+        })
+    }
+    connection.end();
+}
 async function updateEnterprise(req, res) { 
     const {id, active} = req.body;
 
@@ -367,9 +474,11 @@ module.exports = {
     enterpriseData,
     enterpriseExist,
     getEnterprises,
+    getEnterprisesBL,
     updateEnterprise,
     getScore,
     getEnterpriseOpinion,
     getEnterprisesOpinions,
-    getAlredySigned
+    getAlredySigned,
+    getEnterpriseBlackList
 }

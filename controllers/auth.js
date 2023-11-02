@@ -105,8 +105,8 @@ async function signUp(req, res) {
             }
 
             if(role==='STUDENT') {
-                const sqlQueryType = `INSERT INTO student(id_user,code,cycle,cv_path,cv_update,id_specialty,active) 
-                    values(${idUser},'${code}',${cycle},'',0,${specialty},1);`
+                const sqlQueryType = `INSERT INTO student(id_user,code,cycle,cv_path,cv_update,id_specialty,phone,dni,active) 
+                    values(${idUser},'${code}',${cycle},'',0,${specialty},'','',1);`
                 const resultType  = await sqlAsync(sqlQueryType, connection);
 
                 if(resultType.affectedRows) {
@@ -114,7 +114,9 @@ async function signUp(req, res) {
                         ...user,
                         code,cycle,
                         cv_path: '',
-                        uploadDateCV: ''
+                        uploadDateCV: '',
+                        phone:'',
+                        dni:''
                     }
                     result = true;
                 } else {
@@ -247,7 +249,7 @@ async function signUp(req, res) {
 async function updateProfile(req, res) {
 
     const {id,role,name,lastname,location,
-        code,specialty,cycle,phone,sector,
+        code,specialty,cycle,phone,sector,dni,
         numEmployees,job,description} = req.body;
     const cycleNum = cycle=='Egresado'? 100: cycle
         
@@ -267,7 +269,7 @@ async function updateProfile(req, res) {
 
         if(res.affectedRows) {
             if(role==='STUDENT') {
-                let sql = `UPDATE student SET code='${code}',id_specialty=${specialty},cycle=${cycleNum} WHERE id_user=${id};`
+                let sql = `UPDATE student SET code='${code}',dni='${dni}',phone='${phone}',id_specialty=${specialty},cycle=${cycleNum} WHERE id_user=${id};`
                 const r = await sqlAsync(sql, connection);
 
                 if(r.affectedRows) result = true;
@@ -347,6 +349,8 @@ async function getUser(resultLUser, connection,photo) {
                         code: typeUser.code,
                         cycle: typeUser.cycle,
                         cv_path: typeUser.cv_path,
+                        phone: typeUser.phone,
+                        dni: typeUser.dni,
                         uploadDateCV: getDateByNumber(typeUser.cv_update),
                         id_specialty: typeUser.id_specialty
                     }
@@ -394,12 +398,21 @@ async function getUser(resultLUser, connection,photo) {
     
                     const sqlQueryu = `SELECT * FROM user WHERE id_user=${typeUser.id_enterprise};`
                     const resultu  = await sqlAsync(sqlQueryu, connection);
-    
+
+                    
                     if(resultu.length>0) {
                         const emp = resultu[0]
-
+                        
                         if(emp.active==0) {
                             return {result: false, error: "Empresa inactiva", user: null}
+                        } else {
+                            const sqlQuerye = `SELECT * FROM enterprise WHERE id_user=${typeUser.id_enterprise};`
+                            const resulte  = await sqlAsync(sqlQuerye, connection);
+                            const ent = resulte[0]
+
+                            if(ent.blacklisted_state==='B') {
+                                return {result: false, error: "Empresa en lista negra", user: null}
+                            }
                         }
         
                         user = {

@@ -122,37 +122,61 @@ async function getStudents(req, res) {
     });
 
     try{
-        let sqlQuery = `SELECT U.name, U.lastname, S.cycle, U.photo, U.id_user, S.cv_update, S.cv_path, J.relation,S.id_specialty
+        let sqlQuery = `SELECT U.name, U.lastname, S.cycle, U.photo, U.id_user, S.cv_update, S.cv_path, J.relation,
+        S.id_specialty, U.birstdate, U.id_location, U.email, S.phone, S.dni
         FROM studentxjob AS J
         INNER JOIN student AS S ON S.id_user = J.id_student
         INNER JOIN user AS U ON U.id_user = S.id_user
         WHERE CONCAT(U.name, ' ', U.lastname) like '%${student}%' AND J.id_job=${code}`;
         if(location!='') sqlQuery += ` AND U.id_location =${location}`
         if(specialty!='') sqlQuery += ` AND S.id_specialty =${specialty}`
-        if(type!='' && type!='1') sqlQuery += ` AND J.relation ='${type}'`
+        if(type!='') sqlQuery += ` AND J.relation ='${type}'`
         if(oderby!='') sqlQuery += ` ORDER BY ${oderby=="1"? "S.cv_update": "S.cycle"}`
         
         const result = await sqlAsync(sqlQuery, connection);
         
         const sqlSpe = `SELECT * FROM specialty;`;
         const arrSpecialties = await sqlAsync(sqlSpe, connection);
+        const sqlLo = `SELECT * FROM location;`;
+        const arrLocations = await sqlAsync(sqlLo, connection);
 
         for(let it of result) {
+            const age = new Date().getTime() - it.birstdate
             const sqllans = `SELECT * FROM userxlanguage AS X
             INNER JOIN language AS L ON X.id_language=L.id_language
             WHERE X.id_user=${it.id_user} AND X.active=1;`;
             const arrlans = await sqlAsync(sqllans, connection);
 
             if(languages.length===0 || matchBetween(arrlans, languages, 'id_language')) {
+                const sqlcert = `SELECT * FROM certificate WHERE id_user=${it.id_user} AND active=1 AND type=1;`;
+                const arrcetrs = await sqlAsync(sqlcert, connection);
+                const arrCertsformd = []
+                for(let it of arrcetrs) {
+                    const item = {
+                        ...it,
+                        date_init: getDateByNumber(it.date_init),
+                        date_end: getDateByNumber(it.date_end),
+                        id: `${it.id_certificate}`,
+                    }
+                    arrCertsformd.push(item)
+                }
+
                 const item = {
                     name: `${it.name} ${it.lastname}`,
-                    specialty: getAttrById(arrSpecialties,'id_specialty',it.id_specialty, 'name'),//
+                    specialty: getAttrById(arrSpecialties,'id_specialty',it.id_specialty, 'name'),
                     cycle: it.cycle,
                     photo: it.photo,
                     id: `${it.id_user}`,
                     cv_update: getDateByNumber(it.cv_update),
                     cv_path: it.cv_path,
-                    hired: it.relation=='C',
+                    hired: it.relation=='C',//
+                    age: Math.floor(age/(1000*60*60*24*365)),
+                    relation: it.relation,
+                    email: it.email,
+                    phone: it.phone,
+                    dni: it.dni,
+                    experience: arrCertsformd,
+                    location: getAttrById(arrLocations,'id_location',it.id_location, 'name'),
                     languages: []
                 } 
                 for(let lan of arrlans) {
@@ -184,7 +208,7 @@ async function getStudents(req, res) {
 }
 
 async function contractStudent(req, res) { 
-    const {name, id_student,id_enterprise, code,init_date,end_date} = req.body;
+    const {name, id_student,id_enterprise, code,init_date,end_date,relation} = req.body;
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
     let success = false
     let message = "Error en el servicio de contratación";
@@ -194,20 +218,36 @@ async function contractStudent(req, res) {
     });
 
     try{
-        let sqlQuery = `INSERT INTO agreement(name,document_path,id_job,id_student,id_enterprise,id_employed,id_signatory,
-            hash,date_student,date_enterprise,date_professor,init_date,end_date,observation_student,observation_ie,
-            observation_date_st,observation_date_ie,sign_student,sign_enterprise,sign_professor,active) 
-        values('${name}','',${code},${id_student},${id_enterprise},null,null,
-        '',0,0,0,${getTimeDate(init_date)},${getTimeDate(end_date)},'','',
-        0,0,'','','',1);`;
-        let result =  await sqlAsync(sqlQuery, connection);
+        let sqlQuery = `UPDATE studentxjob SET relation='${relation}' WHERE id_student=${id_student} AND id_job=${code} AND active=1`;
+        let r =  await sqlAsync(sqlQuery, connection);
 
-        if (result.affectedRows) {
-            sqlQuery = `UPDATE studentxjob SET relation='C' WHERE id_student=${id_student} AND id_job=${code} AND active=1`;
-            let r =  await sqlAsync(sqlQuery, connection);
+        if(r.affectedRows) {
+            if(relation==='C') {
+                sqlQuery = `INSERT INTO agreement(name,document_path,id_job,id_student,id_enterprise,id_employed,id_signatory,
+                    hash,date_student,date_enterprise,date_professor,init_date,end_date,observation_student,observation_ie,
+                    observation_date_st,observation_date_ie,sign_student,sign_enterprise,sign_professor,active) 
+                values('${name}','',${code},${id_student},${id_enterprise},null,null,
+                '',0,0,0,${getTimeDate(init_date)},${getTimeDate(end_date)},'','',
+                0,0,'','','',1);`;
+                let result =  await sqlAsync(sqlQuery, connection);
 
-            if (r.affectedRows) {
-                success = true
+                if(result.affectedRows) {
+                    let sqlmail = `SELECT * FROM user WHERE id_user=${id_student}`
+                    const resultMail =  await sqlAsync(sqlmail, connection);
+                    let sqljob = `SELECT * FROM job WHERE id_job=${code}`
+                    const resultJob =  await sqlAsync(sqljob, connection);
+                    let sqlent = `SELECT * FROM user WHERE id_user=${id_enterprise}`
+                    const resultEnt =  await sqlAsync(sqlent, connection);
+                    const student = resultMail[0]
+                    const job = resultJob[0]
+                    const enterprise = resultEnt[0]
+                    const subject = `Contrato ${job.title}`
+                    const arr = [`A nombre de empresa ${enterprise.name} le informamos que usted ha sido contratado(a) en el puesto de ${job.title}.`,
+                                `Puede ver los detalles del puesto de trabajo y el estado de su convenio ingresando a ${MAIN_PAGE}.`]
+                    const text = mailFormater(`${student.name} ${student.lastname}`,arr)
+                    await sendEmail(student.email, subject, text)
+                }
+            } else if(relation==='R') {
                 let sqlmail = `SELECT * FROM user WHERE id_user=${id_student}`
                 const resultMail =  await sqlAsync(sqlmail, connection);
                 let sqljob = `SELECT * FROM job WHERE id_job=${code}`
@@ -217,14 +257,16 @@ async function contractStudent(req, res) {
                 const student = resultMail[0]
                 const job = resultJob[0]
                 const enterprise = resultEnt[0]
-                const subject = `Contrato ${job.title}`
-                const arr = [`A nombre de empresa ${enterprise.name} le informamos que usted ha sido contratado(a) en el puesto de ${job.title}.`,
-                            `Puede ver los detalles del puesto de trabajo y el estado de su convenio ingresando a ${MAIN_PAGE}.`]
+                const subject = `Estudiante Precalificado al puesto de ${job.title}`
+                const arr = [`A nombre de empresa ${enterprise.name} le informamos que usted ha sido precalificado(a) para el puesto de ${job.title}.`,
+                             `Dentro de poco, el personal de RRHH se pondrá en contacto con usted para informarle los próximos pasos de su postulación.`,
+                            `Puede ver los detalles del puesto de trabajo ingresando a ${MAIN_PAGE}.`]
                 const text = mailFormater(`${student.name} ${student.lastname}`,arr)
                 await sendEmail(student.email, subject, text)
-
             }
+            success = true
         }
+
     } catch(e){
         console.log(e)
         success = false

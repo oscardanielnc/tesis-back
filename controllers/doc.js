@@ -120,6 +120,141 @@ async function uploadDoc(files, sql, res) {
     connection.end();
 }
 
+async function uploadDocCycle(req,res) {
+    const {cycle,specialty,id_profesor,title,descripcion} = req.body;
+    const files = req.files;
+
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    if(files && Object.keys(files).length !== 0) {
+        //files contine varios archivos. Solo quiero 1
+        const attr = `file0`
+        const objDoc = files[attr]
+        const docPathName = objDoc.path.split("\\")[2];
+
+        const sqlQueryType = `INSERT INTO document(title,descripcion,id_professor,id_specialty,id_period,date,path,active) 
+        values('${title}','${descripcion}',${id_profesor},${specialty},${cycle},${nowTime()},'${docPathName}',1);`
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+        
+        if(resultType.affectedRows) {
+            res.status(200).send({
+                success: true,
+                result: true,
+                message: "Archivos insertados correctamente!"
+            })
+        }
+
+    } else {
+        res.status(505).send({
+            success: false,
+            message: "No se han enviado archivos!"
+        })
+    }
+    connection.end();
+}
+
+async function uploadMyDeliver(req,res) {
+    const {id_deliver,name,id_student,id_assessment} = req.body;
+    const files = req.files;
+    console.log(id_deliver,name,id_student,id_assessment)
+
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    try {
+        if(files && Object.keys(files).length !== 0) {
+            const attr = `file0`
+            const objDoc = files[attr]
+            const docPathName = objDoc.path.split("\\")[2];
+    
+            let sqlQueryType = ''
+            if(id_deliver && id_deliver!='' && id_deliver!='null') {
+                //actualizar doc
+                sqlQueryType = `UPDATE deliver SET update_date=${nowTime()}, path='${docPathName}' WHERE id_deliver=${id_deliver};`
+            } else {
+                sqlQueryType = `INSERT INTO deliver(name,id_student,id_assessment,update_date,path,active) 
+                values('${name}',${id_student},${id_assessment},${nowTime()},'${docPathName}',1);`
+            }
+            const resultType  = await sqlAsync(sqlQueryType, connection);
+    
+            if(resultType.affectedRows) {
+                res.status(200).send({
+                    success: true,
+                    result: true,
+                    message: "Archivos insertados correctamente!"
+                })
+            }
+    
+        } else {
+            res.status(505).send({
+                success: false,
+                message: "No se han enviado archivos!"
+            })
+        }
+    } catch(e) {
+        console.log(e.message)
+        res.status(505).send({
+            success: false,
+            message: e.message
+        })
+    }
+    connection.end();
+}
+
+async function uploadBlackList(req,res) {
+    const {action,document_name,id_enterprise,id_user,name,photo,role,text,state} = req.body;
+    const files = req.files;
+
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    connection.connect(err => {
+        if (err) throw err;
+    });
+
+    try {
+        let docPathName = ''
+        if(files && Object.keys(files).length !== 0) {
+            const attr = `file0`
+            const objDoc = files[attr]
+            docPathName = objDoc.path.split("\\")[2];
+        }
+        let sqlQueryType = `INSERT INTO blacklist_msg(id_enterprise,id_user,name,role,photo,update_date,text,
+            document_path,document_name,action,active) 
+            values(${id_enterprise},${id_user},'${name}','${role}','${photo}',${nowTime()},'${text}',
+            '${docPathName}','${document_name}',${action},1);`
+        
+        const resultType  = await sqlAsync(sqlQueryType, connection);
+
+        if(resultType.affectedRows) {
+
+            if(action!=1 || (state=='A' && action==1)) {
+                let nState = action==2? 'B': 'A'
+                if(state=='A' && action==1) nState = 'N'
+                const sqlSign = `UPDATE enterprise SET blacklisted_state='${nState}' WHERE id_user=${id_enterprise};`
+                await sqlAsync(sqlSign, connection);
+            }
+
+            res.status(200).send({
+                success: true,
+                result: true,
+                message: "Archivos insertados correctamente!"
+            })
+        }
+    
+    } catch(e) {
+        console.log(e.message)
+        res.status(505).send({
+            success: false,
+            message: e.message
+        })
+    }
+    connection.end();
+}
+
 function getDoc(req, res) {
     const filePath = req.params.filePath;
     const fileName = req.params.fileName || `blank.${filePath.split(".")[1]}`;
@@ -166,5 +301,8 @@ module.exports = {
     getDoc,
     // deleteDoc,
     uploadCV,
-    uploadDoc
+    uploadDoc,
+    uploadDocCycle,
+    uploadMyDeliver,
+    uploadBlackList
 }

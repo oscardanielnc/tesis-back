@@ -444,6 +444,7 @@ async function createPeriod(req, res) {
 
 }
 async function getPeriods(req, res) { 
+    const {idStudent} = req.params
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
     let success = false
     let message = "Error en el servicio de periodos";
@@ -458,6 +459,12 @@ async function getPeriods(req, res) {
         let sqlQuery = `SELECT * FROM period WHERE active=1;`;
         const result = await sqlAsync(sqlQuery, connection);
 
+        let myPeriods = []
+        if(idStudent && idStudent!='x') {
+            let sqlMy = `SELECT * FROM studentxperiod WHERE active=1 AND id_student=${idStudent};`;
+            myPeriods = await sqlAsync(sqlMy, connection);
+        }
+
         for(let it of result) {
             const item = {
                 id: it.id_period, 
@@ -465,7 +472,10 @@ async function getPeriods(req, res) {
                 cycle_init: getDate2ByNumber(it.cycle_init), 
                 cycle_end: getDate2ByNumber(it.cycle_end),
             }
-            data.push(item)
+            if(idStudent && idStudent!='x') {
+                //verificar si este es un periodo del alumno
+                if(isMyPeriod(item, myPeriods)) data.push(item)
+            } else data.push(item)
         }
         success = true
     } catch(e){
@@ -483,7 +493,12 @@ async function getPeriods(req, res) {
     }
     connection.end();
 }
-
+function isMyPeriod(item, arr) {
+    for(let it of arr) {
+        if(item.id==it.id_period) return true
+    }
+    return false
+}
 
 module.exports = {
     getLocations,

@@ -18,6 +18,7 @@ const opinionRoutes =  require('./routers/opinion');
 const signatoryRoutes =  require('./routers/signatory');
 const professorRoutes =  require('./routers/professor');
 const docRoutes =  require('./routers/doc');
+const delivRoutes =  require('./routers/deliverable');
 
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
@@ -44,5 +45,6 @@ app.use(`/api/${API_VERSION}`, opinionRoutes);
 app.use(`/api/${API_VERSION}`, signatoryRoutes);
 app.use(`/api/${API_VERSION}`, professorRoutes);
 app.use(`/api/${API_VERSION}`, docRoutes);
+app.use(`/api/${API_VERSION}`, delivRoutes);
 
 module.exports = app;

@@ -21,7 +21,7 @@ async function getJobs(req, res) {
     });
 
     try{
-        let sqlQuery = `SELECT J.title, U.name, J.end_ad_date, J.id_job, J.salary, U.id_location, J.modality, E.id_user, U.photo
+        let sqlQuery = `SELECT J.title, U.name, J.init_ad_date, J.end_ad_date, J.id_job, J.salary, U.id_location, J.modality, E.id_user, U.photo
         FROM job AS J
         INNER JOIN enterprise AS E ON E.id_user = J.id_enterprise
         INNER JOIN user AS U ON U.id_user = E.id_user
@@ -48,6 +48,7 @@ async function getJobs(req, res) {
                 job_title: it.title,
                 enterprise_name: it.name,
                 date_end: getDateByNumber(it.end_ad_date),
+                date_init: getDateByNumber(it.init_ad_date),
                 code: it.id_job,
                 salary: it.salary,
                 location: o1,
@@ -112,7 +113,7 @@ async function getJobByCode(req, res) {
                     const mm = await sqlAsync(m, connection);
                     if(mm.length>0) {
                         const sxj = mm[0]
-                        applied = sxj.relation==='P' || sxj.relation==='C';
+                        applied = sxj.relation==='P' || sxj.relation==='C' || sxj.relation==='N' || sxj.relation==='R' ;
                         con = sxj.relation==='C';
                     }
                 }
@@ -126,6 +127,7 @@ async function getJobByCode(req, res) {
                     enterprise_photo: enterprise.photo,
                     job_title: job.title,
                     code: `${job.id_job}`,
+                    date_init: getDateByNumber(job.init_ad_date),
                     date_end: getDateByNumber(job.end_ad_date),
                     job_start: getDateByNumber(job.job_start),
                     job_end: getDateByNumber(job.job_end),
@@ -227,7 +229,7 @@ async function noApplyJob(req, res) {
     connection.end();
 }
 async function createJob(req, res) { 
-    const {job,salary,date_end,modality,vacancies,max,job_start,job_end,sections,id_enterprise} = req.body;
+    const {job,salary,date_init,date_end,modality,vacancies,max,job_start,job_end,sections,id_enterprise} = req.body;
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
     let success = false
     let message = "Error en el servicio de empleos";
@@ -238,9 +240,9 @@ async function createJob(req, res) {
     });
 
     try{
-        let sqlQuery = `INSERT INTO job(title,end_ad_date,id_enterprise,salary,modality,vacancies,
+        let sqlQuery = `INSERT INTO job(title,init_ad_date,end_ad_date,id_enterprise,salary,modality,vacancies,
             max_applicants,job_start,job_end,active) 
-            values('${job}',${getTimeDate(date_end)},${id_enterprise},${salary},'${modality}',${vacancies},
+            values('${job}',${getTimeDate(date_init)},${getTimeDate(date_end)},${id_enterprise},${salary},'${modality}',${vacancies},
             ${max},${getTimeDate(job_start)},${getTimeDate(job_end)},1);`
         const result =  await sqlAsync(sqlQuery, connection);
 
@@ -270,7 +272,7 @@ async function createJob(req, res) {
 
 }
 async function updateJob(req, res) { 
-    const {job_title,code,date_end,job_start,job_end,salary,
+    const {job_title,code,date_end,job_start,job_end,date_init,salary,
         modality,vacancies,max_applicants,sections,active} = req.body;
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
     let success = false
@@ -281,7 +283,7 @@ async function updateJob(req, res) {
     });
 
     try{
-        let sqlQuery = `UPDATE job SET title='${job_title}',end_ad_date=${getTimeDate(date_end)},
+        let sqlQuery = `UPDATE job SET title='${job_title}',init_ad_date=${getTimeDate(date_init)},end_ad_date=${getTimeDate(date_end)},
         salary=${salary},modality='${modality}',vacancies=${vacancies},max_applicants=${max_applicants},
         job_start=${getTimeDate(job_start)},job_end=${getTimeDate(job_end)},active=${active?1:0} WHERE id_job=${code};`
         const result =  await sqlAsync(sqlQuery, connection);
