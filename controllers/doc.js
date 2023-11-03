@@ -236,7 +236,16 @@ async function uploadBlackList(req,res) {
                 if(state=='A' && action==1) nState = 'N'
                 const sqlSign = `UPDATE enterprise SET blacklisted_state='${nState}' WHERE id_user=${id_enterprise};`
                 await sqlAsync(sqlSign, connection);
+
             }
+            const sqlStu = `SELECT * FROM user WHERE id_user=${id_enterprise};`;
+            const resStu = await sqlAsync(sqlStu, connection);
+            const enterprise = resStu[0]
+            const subject = `Observación registrada en su proceso de análisis`
+            const arr = [`Le informamos que se han añadido comentarios en su proceso de análisis.`,
+                        `Puede ver el estado de su proceso ingresando a ${MAIN_PAGE}.`]
+            const text = mailFormater(`${enterprise.name}`,arr, true)
+            await sendEmail(enterprise.email, subject, text)
 
             res.status(200).send({
                 success: true,

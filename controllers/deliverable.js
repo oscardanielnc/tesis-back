@@ -52,6 +52,38 @@ async function deleteDocumentCycle(req, res) {
     res.status(200).send({result: result, success: result, message: ""});
     connection.end();
 }
+async function registerEnterpriseForm(req, res) {
+    const {enterprise_id,enterprise_name,enterprise_photo,ruc,id_studentxperiod,id_student} = req.body;
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let result = false
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sqlQueryType = `UPDATE studentxperiod SET id_enterprise=${enterprise_id}, ruc='${ruc}', 
+        enterprise_name='${enterprise_name}', enterprise_photo='${enterprise_photo}'
+        WHERE id_studentxperiod=${id_studentxperiod};`
+        await sqlAsync(sqlQueryType, connection);
+
+        const sqlQuery = `INSERT INTO opinion(id_studentxperiod,id_enterprise,id_creator,active,student_date,enterprise_date,score,comment_student,comment_entersprise,
+            s1,s2,s3,s4,s5,s6,s7,s8,e1,e2,e3,e4,e5,e6,e7,e8) 
+            values(${id_studentxperiod},${enterprise_id},${id_student},1,0,0,0,'','',
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);`
+        await sqlAsync(sqlQuery, connection);
+
+        result = true
+    } catch(e){
+        console.log(e)
+        res.status(505).send({ 
+            message: e.message,
+            success: false
+        })
+    }
+
+    res.status(200).send({result: result, success: result, message: ""});
+    connection.end();
+}
 async function insertCommentDeliv(req, res) {
     const {id_deliver,descripcion} = req.body;
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
@@ -218,6 +250,51 @@ async function getAssessmentData(req, res) {
     res.status(200).send({result: data, success: result, message: ""});
     connection.end();
 }
+async function getFormOpinions(req, res) {
+    const {id_specialty,id_period} = req.body;
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let data = []
+    let result = false
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sql2 = `SELECT U.id_user, U.name, U.lastname, U.photo, S.enterprise_name, S.id_studentxperiod, 
+            S.id_enterprise, S.form_student, S.form_enterprise
+            FROM studentxperiod AS S
+            INNER JOIN user AS U ON S.id_student = U.id_user
+            WHERE S.id_specialty=${id_specialty} AND S.id_period=${id_period} AND S.active=1 ORDER BY S.id_studentxperiod DESC;`
+        const sxp =  await sqlAsync(sql2, connection);
+
+        for(let it of sxp) {
+            let opinion = null
+            if(it.id_enterprise) {
+                const sqlCooms = `SELECT * FROM opinion WHERE id_studentxperiod=${it.id_studentxperiod} AND active=1;`
+                const comms =  await sqlAsync(sqlCooms, connection);
+                opinion = comms[0]
+            }
+
+            const item = {
+                ...it,
+                form_student: it.form_student==1,
+                form_enterprise: it.form_enterprise==1,
+                opinion
+            }
+            data.push(item)
+        }
+        result = true
+    } catch(e){
+        console.log(e)
+        res.status(505).send({ 
+            message: e.message,
+            success: false
+        })
+    }
+
+    res.status(200).send({result: data, success: result, message: ""});
+    connection.end();
+}
 function getDeliv(idUser,delivs) {
     for(let item of delivs) {
         if(item.id_student==idUser) {
@@ -260,11 +337,107 @@ async function createAssessmentsCycle(req, res) {
     connection.end();
 }
 
+async function getMyFormOpinion(req, res) {
+    const {id_student, id_specialty,id_period} = req.body;
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let data = {}
+    let result = false
+    let message = "Estudiante no matriculado en el semestre"
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        let sqlx = `SELECT * FROM studentxperiod WHERE id_student=${id_student} AND 
+        id_specialty=${id_specialty} AND id_period=${id_period} AND active=1;`
+        const sxp =  await sqlAsync(sqlx, connection);
+
+        if(sxp.length>0) {
+            const periodStudent = sxp[0]
+            let sql = `SELECT * FROM opinion WHERE id_studentxperiod=${periodStudent.id_studentxperiod} AND active=1;`
+            const opinions =  await sqlAsync(sql, connection);
+            const opinion = opinions.length>0? opinions[0]: null
+
+            data = {
+                periodStudent,
+                opinion
+            }
+            result = true
+        }
+        
+    } catch(e){
+        console.log(e)
+        message = e.message
+    }
+
+    res.status(200).send({result: data, success: result, message: message});
+    connection.end();
+}
+async function sendSurvey(req, res) {
+    const {person} = req.body;
+    const person_type = person=='s'? 'student': 'enterprise'
+    
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let result = false
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const attr_form = `comment_${person_type}`
+        const sqlQueryType = `UPDATE studentxperiod SET form_${person_type}=1
+        WHERE id_studentxperiod=${req.body.id_studentxperiod};`
+        await sqlAsync(sqlQueryType, connection);
+
+        const sqlQuery = `UPDATE opinion SET ${person_type}_date=${nowTime()}, score=${getScore(req.body,person)}, 
+        ${attr_form}='${req.body[attr_form]}' ${getSubScore(req.body,person)} 
+        WHERE id_opinion=${req.body.id_opinion};`
+        await sqlAsync(sqlQuery, connection);
+
+        result = true
+    } catch(e){
+        console.log(e)
+        res.status(505).send({ 
+            message: e.message,
+            success: false
+        })
+    }
+
+    res.status(200).send({result: result, success: result, message: ""});
+    connection.end();
+}
+function getScore(form, person) {
+    if(person!='s') return 0
+
+    let score = 0
+    for(let i=1; i<=8; i++) {
+        const attr = `s${i}`
+        const val = Number(form[attr])
+        score += val;
+    }
+    return score;
+}
+
+function getSubScore(form, person) {
+    let string = ''
+    for(let i=1; i<=8; i++) {
+        const attr = `${person}${i}`
+        const val = Number(form[attr])
+        const str = ` ,${attr}=${val} `
+        string += str;
+    }
+    return string;
+}
+
 module.exports = {
     getDocumentsCycle,
     getAssessmentsCycle,
     deleteDocumentCycle,
     createAssessmentsCycle,
     getAssessmentData,
-    insertCommentDeliv
+    insertCommentDeliv,
+    registerEnterpriseForm,
+    getMyFormOpinion,
+    sendSurvey,
+    getFormOpinions
 }
