@@ -39,26 +39,26 @@ async function enterpriseData(req, res) {
             if(item.date_end > nowTime()) user.ads.push(item)
         }
 
-        sqlQuery = `SELECT * FROM opinion WHERE id_enterprise=${idUser} AND active=1;`
-        result =  await sqlAsync(sqlQuery, connection);
+        // sqlQuery = `SELECT * FROM opinion WHERE id_enterprise=${idUser} AND active=1;`
+        // result =  await sqlAsync(sqlQuery, connection);
 
-        let index = 0
-        for(let i=0; i<result.length && index<10; i++) {
-            const it = result[i]
-            const item = {
-                id: it.id_opinion,
-                enterprise_name: it.enterprise,
-                score: it.score,
-                date_update: getDateByNumber(it.update_date),
-                description: it.descripcion,
-                student: it.student,
-                student_id: `${it.id_creator}`,
-                id_enterprise: `${idUser}`,
-                state: it.verification_state
-            }
-            user.opinions.push(item)
-            index++
-        }
+        // let index = 0
+        // for(let i=0; i<result.length && index<10; i++) {
+        //     const it = result[i]
+        //     const item = {
+        //         id: it.id_opinion,
+        //         enterprise_name: it.enterprise,
+        //         score: it.score,
+        //         date_update: getDateByNumber(it.update_date),
+        //         description: it.descripcion,
+        //         student: it.student,
+        //         student_id: `${it.id_creator}`,
+        //         id_enterprise: `${idUser}`,
+        //         state: it.verification_state
+        //     }
+        //     user.opinions.push(item)
+        //     index++
+        // }
         success = true
     } catch(e){
         console.log(e)
@@ -330,13 +330,27 @@ async function updateEnterprise(req, res) {
 
 }
 async function getScore(id_enterprise,connection) {
-    // const sqlQueryOp = `SELECT * FROM opinion WHERE id_enterprise=${id_enterprise};`
-    // const resultOp  = await sqlAsync(sqlQueryOp, connection);
-
-    return {
+    let data = {
         score: 0,
         num_opinios: 0
     }
+    try{
+        let sqlQuery = `SELECT COUNT(*) AS num_opinios, SUM(score) AS sumscore FROM opinion WHERE id_enterprise=${id_enterprise} AND student_date<>0;`;
+        const result = await sqlAsync(sqlQuery, connection);
+        if(result.length>0) {
+            const res = result[0]
+            const dec = res.sumscore/(res.num_opinios*8)
+            const dec100 = Math.floor(dec*100)
+            data = {
+                score: dec100/100,
+                num_opinios: res.num_opinios
+            }
+        }
+    } catch(e){
+        console.log(e)
+    }
+
+    return data
 }
 async function getEnterpriseOpinion(req, res) { 
     const {id} = req.params;

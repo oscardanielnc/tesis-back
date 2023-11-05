@@ -5,6 +5,7 @@ const api = express.Router();
 
 api.get("/deliv/docs/:cycle/:specialty", DeliverableController.getDocumentsCycle);
 api.get("/deliv/assessment/:cycle/:specialty/:student", DeliverableController.getAssessmentsCycle);
+api.get("/deliv/student/opinions/:id_enterprise", DeliverableController.getStudentOpinions);
 api.delete("/deliv/doc", DeliverableController.deleteDocumentCycle);
 api.post("/deliv/assessment", DeliverableController.createAssessmentsCycle);
 api.post("/deliv/comment", DeliverableController.insertCommentDeliv);

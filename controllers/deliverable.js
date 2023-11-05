@@ -66,7 +66,7 @@ async function registerEnterpriseForm(req, res) {
         WHERE id_studentxperiod=${id_studentxperiod};`
         await sqlAsync(sqlQueryType, connection);
 
-        const sqlQuery = `INSERT INTO opinion(id_studentxperiod,id_enterprise,id_creator,active,student_date,enterprise_date,score,comment_student,comment_entersprise,
+        const sqlQuery = `INSERT INTO opinion(id_studentxperiod,id_enterprise,id_creator,active,student_date,enterprise_date,score,comment_student,comment_enterprise,
             s1,s2,s3,s4,s5,s6,s7,s8,e1,e2,e3,e4,e5,e6,e7,e8) 
             values(${id_studentxperiod},${enterprise_id},${id_student},1,0,0,0,'','',
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);`
@@ -260,8 +260,8 @@ async function getFormOpinions(req, res) {
         if (err) throw err;
     });
     try{
-        const sql2 = `SELECT U.id_user, U.name, U.lastname, U.photo, S.enterprise_name, S.id_studentxperiod, 
-            S.id_enterprise, S.form_student, S.form_enterprise
+        const sql2 = `SELECT U.id_user, U.name, U.lastname, U.photo, S.enterprise_name, S.id_studentxperiod, S.id_student,
+            S.id_enterprise, S.form_student, S.form_enterprise, S.ruc, S.enterprise_photo 
             FROM studentxperiod AS S
             INNER JOIN user AS U ON S.id_student = U.id_user
             WHERE S.id_specialty=${id_specialty} AND S.id_period=${id_period} AND S.active=1 ORDER BY S.id_studentxperiod DESC;`
@@ -274,6 +274,50 @@ async function getFormOpinions(req, res) {
                 const comms =  await sqlAsync(sqlCooms, connection);
                 opinion = comms[0]
             }
+
+            const item = {
+                ...it,
+                form_student: it.form_student==1,
+                form_enterprise: it.form_enterprise==1,
+                opinion
+            }
+            data.push(item)
+        }
+        result = true
+    } catch(e){
+        console.log(e)
+        res.status(505).send({ 
+            message: e.message,
+            success: false
+        })
+    }
+
+    res.status(200).send({result: data, success: result, message: ""});
+    connection.end();
+}
+
+async function getStudentOpinions(req, res) {
+    const {id_enterprise} = req.params;
+    const connection = mysql.createConnection(MYSQL_CREDENTIALS);
+    let data = []
+    let result = false
+
+    connection.connect(err => {
+        if (err) throw err;
+    });
+    try{
+        const sql2 = `SELECT U.id_user, U.name, U.lastname, U.photo, S.id_studentxperiod, S.id_student,
+            S.form_student, S.form_enterprise
+            FROM studentxperiod AS S
+            INNER JOIN user AS U ON S.id_student = U.id_user
+            WHERE S.id_enterprise=${id_enterprise} AND S.active=1 ORDER BY S.id_studentxperiod DESC;`
+        const sxp =  await sqlAsync(sql2, connection);
+
+        for(let it of sxp) {
+            let opinion = null
+            const sqlCooms = `SELECT * FROM opinion WHERE id_studentxperiod=${it.id_studentxperiod} AND active=1;`
+            const comms =  await sqlAsync(sqlCooms, connection);
+            opinion = comms[0]
 
             const item = {
                 ...it,
@@ -439,5 +483,6 @@ module.exports = {
     registerEnterpriseForm,
     getMyFormOpinion,
     sendSurvey,
-    getFormOpinions
+    getFormOpinions,
+    getStudentOpinions
 }
