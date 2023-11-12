@@ -159,7 +159,6 @@ async function uploadDocCycle(req,res) {
 async function uploadMyDeliver(req,res) {
     const {id_deliver,name,id_student,id_assessment} = req.body;
     const files = req.files;
-    console.log(id_deliver,name,id_student,id_assessment)
 
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
     connection.connect(err => {

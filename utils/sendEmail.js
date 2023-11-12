@@ -18,7 +18,6 @@ async function sendEmail(toEmail,subject,text) {
 
     const transport = nodemailer.createTransport(config)
     const info = await transport.sendMail(msg)
-    console.log(info)
 }
 
 module.exports = {

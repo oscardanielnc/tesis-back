@@ -250,7 +250,7 @@ async function getAssessmentData(req, res) {
     res.status(200).send({result: data, success: result, message: ""});
     connection.end();
 }
-async function getFormOpinions(req, res) {
+async function getFormOpinions(req, res) {0
     const {id_specialty,id_period} = req.body;
     const connection = mysql.createConnection(MYSQL_CREDENTIALS);
     let data = []
@@ -451,7 +451,7 @@ async function sendSurvey(req, res) {
     connection.end();
 }
 function getScore(form, person) {
-    if(person!='s') return 0
+    if(person!='s') return form.score
 
     let score = 0
     for(let i=1; i<=8; i++) {
